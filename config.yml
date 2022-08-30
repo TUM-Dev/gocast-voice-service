@@ -1,4 +1,5 @@
 api:
   port: 50051
 vosk:
-  model: '../vosk-model-en-us-0.22/'
+  models:
+    - '../vosk-model-en-us-0.22/'
