@@ -5,6 +5,8 @@ import subtitles_pb2
 import subtitles_pb2_grpc
 from grpc_reflection.v1alpha import reflection
 import logging
+from config import Config
+import os
 
 
 class SubtitleService(subtitles_pb2_grpc.SubtitlesServicer):
@@ -16,24 +18,25 @@ class SubtitleService(subtitles_pb2_grpc.SubtitlesServicer):
         return subtitles_pb2.GenerateSubtitlesResponse(path=request.path)
 
 
-def serve(debug: bool = False, port: str = '50051'):
+def serve(cfg: Config, debug: bool = False):
     logging.basicConfig(level=(logging.INFO, logging.DEBUG)[debug])
 
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     service = SubtitleService(
-        model_path="../vosk-model-en-us-0.22/"
+        model_path=cfg['vosk']['model']
     )
     subtitles_pb2_grpc.add_SubtitlesServicer_to_server(service, server)
 
     if debug:
-        logging.debug("starting server with reflection activated.")
+        logging.debug('starting server with reflection activated.')
         service_names = (
             subtitles_pb2.DESCRIPTOR.services_by_name['Subtitles'].full_name,
             reflection.SERVICE_NAME,
         )
         reflection.enable_server_reflection(service_names, server)
 
-    logging.info(f"server listening at :{port}")
+    port = cfg['api']['port']
+    logging.info(f'server listening at :{port}')
     server.add_insecure_port(f'[::]:{port}')
     server.start()
     server.wait_for_termination()
@@ -50,8 +53,10 @@ class SubtitleGenerator:
                                '--model', self.__model_path,
                                '-i', input_path,
                                '-t', 'srt', '-o', 'test.srt'])
-        print(var)
 
 
 if __name__ == "__main__":
-    serve(debug=True)
+    serve(
+        cfg=Config(os.environ["CONFIG_FILE"]),
+        debug=os.environ["DEBUG"] != ""
+    )
