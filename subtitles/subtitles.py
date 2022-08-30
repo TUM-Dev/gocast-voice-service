@@ -1,4 +1,3 @@
-import subprocess
 from concurrent import futures
 import grpc
 import subtitles_pb2
@@ -7,11 +6,12 @@ from grpc_reflection.v1alpha import reflection
 import logging
 from config import Config
 import os
+import vosk
 
 
 class SubtitleService(subtitles_pb2_grpc.SubtitlesServicer):
     def __init__(self, model_path: str):
-        self.__generator = SubtitleGenerator(model_path)
+        self.__generator = vosk.SubtitleGenerator(model_path)
 
     def Generate(self, request, context):
         self.__generator.generate(request.path)
@@ -40,19 +40,6 @@ def serve(cfg: Config, debug: bool = False):
     server.add_insecure_port(f'[::]:{port}')
     server.start()
     server.wait_for_termination()
-
-
-class SubtitleGenerator:
-    def __init__(self, model_path):
-        self.__model_path = model_path
-
-    def generate(self, input_path):
-        # TODO: Wait for new VOSK release and change to python code
-        print('start generation')
-        var = subprocess.call(['vosk-transcriber',
-                               '--model', self.__model_path,
-                               '-i', input_path,
-                               '-t', 'srt', '-o', 'test.srt'])
 
 
 if __name__ == "__main__":
