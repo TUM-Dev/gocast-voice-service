@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+service Subtitles {
+  rpc Generate (GenerateSubtitlesRequest) returns (GenerateSubtitlesResponse) {}
+}
+
+message GenerateSubtitlesRequest {
+  string path = 1;
+}
+
+message GenerateSubtitlesResponse {
+  string path = 1;
+}
+
