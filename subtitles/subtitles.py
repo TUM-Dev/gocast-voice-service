@@ -1,20 +1,43 @@
 from concurrent import futures
+from grpc_reflection.v1alpha import reflection
+import logging
+import os
+import vosk
 import grpc
 import subtitles_pb2
 import subtitles_pb2_grpc
-from grpc_reflection.v1alpha import reflection
-import logging
+
 from config import Config
-import os
-import vosk
 
 
 class SubtitleService(subtitles_pb2_grpc.SubtitlesServicer):
+    """grpc service for subtitles
+    """
+
     def __init__(self, model_paths: [str]):
+        """Initialize service with a given array of paths to models.
+
+        Args:
+            model_paths: An array of paths to models for subtitle generation.
+        """
         logging.debug(f'loading SubtitleService with models: {model_paths}')
         self.__generators = [vosk.SubtitleGenerator(path) for path in model_paths]
 
-    def Generate(self, request, context):
+    def Generate(self, request: subtitles_pb2.GenerateSubtitlesRequest,
+                 context: grpc.ServicerContext) -> subtitles_pb2.GenerateSubtitlesResponse:
+        """ Handler function for an incoming Generate request.
+
+        Iterates the generator list and executes `generate` with the
+        requested path as argument.
+
+        Args:
+            request (GenerateSubtitlesRequest): An object holding the grpc message data.
+            context (grpc.ServicerContext): A context object passed to method implementations.
+                Visit https://grpc.github.io/grpc/python/grpc.html#service-side-context for more information.
+
+        Returns:
+            An GenerateSubtitlesResponse object with response message data.
+        """
         for i, gen in enumerate(self.__generators):
             logging.debug(f'{i}: generating subtitles for {request.path}')
             gen.generate(request.path)
@@ -22,6 +45,12 @@ class SubtitleService(subtitles_pb2_grpc.SubtitlesServicer):
 
 
 def serve(cfg: Config, debug: bool = False):
+    """Starts the grpc server.
+
+    Args:
+        cfg (Config): The configuration of the server.
+        debug (bool): Whether the server should be started in debug mode or not.
+    """
     logging.basicConfig(level=(logging.INFO, logging.DEBUG)[debug])
 
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
