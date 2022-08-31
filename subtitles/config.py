@@ -2,8 +2,7 @@ import yaml
 
 
 class Config:
-    """Config which can be loaded with a given YAML file.
-    """
+    """Config which can be loaded with a given YAML file."""
 
     def __init__(self, path):
         """Initialize Config with a given YAML file.

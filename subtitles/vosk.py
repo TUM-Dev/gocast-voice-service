@@ -1,9 +1,9 @@
 import subprocess
+from os.path import normpath, basename
 
 
 class SubtitleGenerator:
-    """Generate Subtitles with a given model.
-    """
+    """Generate Subtitles with a given model."""
 
     def __init__(self, model_path):
         """Initialize SubtitleGenerator with a given model.
@@ -14,7 +14,11 @@ class SubtitleGenerator:
         """
         self.__model_path = model_path
 
-    def generate(self, input_path: str) -> None:
+    def get_model(self) -> str:
+        """Return model name"""
+        return basename(normpath(self.__model_path))
+
+    def generate(self, input_path: str) -> str:
         """Generate SRT content for input parameter 'input_path'.
 
         Note:
@@ -23,8 +27,16 @@ class SubtitleGenerator:
 
         Args:
              input_path (str): The path of the video file for which subtitles should be generated.
+
+        Returns:
+            string containing the generated subtitles in SRT format
         """
         _ = subprocess.call(['vosk-transcriber',
                              '--model', self.__model_path,
                              '-i', input_path,
-                             '-t', 'srt', '-o', 'test.srt'])
+                             '-t', 'srt', '-o', 'tmp.srt'])
+
+        with open('tmp.srt', 'r') as file:
+            srt = file.read()
+
+        return srt

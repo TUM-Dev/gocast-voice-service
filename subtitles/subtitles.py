@@ -11,8 +11,7 @@ from config import Config
 
 
 class SubtitleService(subtitles_pb2_grpc.SubtitlesServicer):
-    """grpc service for subtitles
-    """
+    """grpc service for subtitles"""
 
     def __init__(self, model_paths: [str]):
         """Initialize service with a given array of paths to models.
@@ -38,13 +37,21 @@ class SubtitleService(subtitles_pb2_grpc.SubtitlesServicer):
         Returns:
             An GenerateSubtitlesResponse object with response message data.
         """
+        results = []
         for i, gen in enumerate(self.__generators):
             logging.debug(f'{i}: generating subtitles for {request.path}')
-            gen.generate(request.path)
-        return subtitles_pb2.GenerateSubtitlesResponse(path=request.path)
+
+            subtitles = gen.generate(request.path)
+            results.append(subtitles_pb2.GenerateSubtitlesResponseData(
+                subtitles=subtitles,
+                model=gen.get_model(),
+                source=request.path
+            ))
+
+        return subtitles_pb2.GenerateSubtitlesResponse(results=results)
 
 
-def serve(cfg: Config, debug: bool = False):
+def serve(cfg: Config, debug: bool = False) -> None:
     """Starts the grpc server.
 
     Args:
