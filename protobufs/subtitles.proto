@@ -9,6 +9,12 @@ message GenerateSubtitlesRequest {
 }
 
 message GenerateSubtitlesResponse {
-  string path = 1;
+  repeated GenerateSubtitlesResponseData results = 1;
+}
+
+message GenerateSubtitlesResponseData {
+  string subtitles = 1;
+  string model = 2;
+  string source = 3;
 }
 
