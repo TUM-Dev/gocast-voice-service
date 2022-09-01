@@ -5,7 +5,7 @@ from os.path import normpath, basename
 class SubtitleGenerator:
     """Generate Subtitles with a given model."""
 
-    def __init__(self, model_path):
+    def __init__(self, model_path: str) -> None:
         """Initialize SubtitleGenerator with a given model.
 
         Args:
@@ -34,7 +34,8 @@ class SubtitleGenerator:
         _ = subprocess.call(['vosk-transcriber',
                              '--model', self.__model_path,
                              '-i', input_path,
-                             '-t', 'srt', '-o', 'tmp.srt'])
+                             '-t', 'srt', '-o', 'tmp.srt'],
+                            stdout=subprocess.PIPE)
 
         with open('tmp.srt', 'r') as file:
             srt = file.read()

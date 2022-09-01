@@ -4,7 +4,7 @@ import yaml
 class Config:
     """Config which can be loaded with a given YAML file."""
 
-    def __init__(self, path):
+    def __init__(self, path: str) -> None:
         """Initialize Config with a given YAML file.
 
         Args:
@@ -14,7 +14,7 @@ class Config:
         with open(path, 'r') as config:
             self.__config = yaml.safe_load(config)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str):
         """Access configuration value with key.
 
         Args:
