@@ -1,4 +1,9 @@
+import sys
+import threading
+import time
 from concurrent import futures
+
+import google
 from grpc_reflection.v1alpha import reflection
 import logging
 import os
@@ -22,43 +27,37 @@ class SubtitleService(subtitles_pb2_grpc.SubtitlesServicer):
         logging.debug(f'loading SubtitleService with models: {model_paths}')
         self.__generators = [vosk.SubtitleGenerator(path) for path in model_paths]
 
-    def Generate(self, request: subtitles_pb2.GenerateSubtitlesRequest,
-                 context: grpc.ServicerContext) -> subtitles_pb2.GenerateSubtitlesResponse:
+    def Generate(self, req: subtitles_pb2.GenerateRequest,
+                 context: grpc.ServicerContext) -> subtitles_pb2.Empty:
         """ Handler function for an incoming Generate request.
 
         Iterates the generator list and executes `generate` with the
         requested path as argument.
 
         Args:
-            request (GenerateSubtitlesRequest): An object holding the grpc message data.
+            req (GenerateRequest): An object holding the grpc message data.
             context (grpc.ServicerContext): A context object passed to method implementations.
                 Visit https://grpc.github.io/grpc/python/grpc.html#service-side-context for more information.
 
         Returns:
-            An GenerateSubtitlesResponse object with response message data.
+            Empty Object
         """
-        results = []
         for i, gen in enumerate(self.__generators):
-            logging.debug(f'{i}: generating subtitles for {request.path}')
+            logging.debug(f'{i}: generating subtitles for {req.source_file}')
 
-            logging.debug(f'{i}: checking if {request.path} exists')
-            if not os.path.isfile(request.path):
-                context.abort(grpc.StatusCode.NOT_FOUND, f'file ({request.path}) does not exists')
+            logging.debug(f'{i}: checking if {req.source_file} exists')
+            if not os.path.isfile(req.source_file):
+                context.abort(grpc.StatusCode.NOT_FOUND, f'source file ({req.source_file}) does not exists')
                 return
 
             try:
-                logging.debug(f'{i}: calling generate({request.path})')
-                subtitles = gen.generate(request.path)
+                logging.debug(f'{i}: calling generate({req.source_file})')
+                gen.generate(req.source_file, req.destin_file)
             except Exception as err:
                 context.abort(grpc.StatusCode.UNKNOWN, err)
                 return
 
-            results.append(subtitles_pb2.GenerateSubtitlesResponseData(
-                subtitles=subtitles,
-                model=gen.get_model(),
-                source=request.path
-            ))
-        return subtitles_pb2.GenerateSubtitlesResponse(results=results)
+        return subtitles_pb2.Empty()
 
 
 def serve(cfg: Config, debug: bool = False) -> None:
@@ -70,7 +69,7 @@ def serve(cfg: Config, debug: bool = False) -> None:
     """
     logging.basicConfig(level=(logging.INFO, logging.DEBUG)[debug])
 
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))  # TODO: How to determine how many workers? Guess?
     service = SubtitleService(
         model_paths=cfg['vosk']['models']
     )

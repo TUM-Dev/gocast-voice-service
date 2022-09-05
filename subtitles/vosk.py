@@ -1,4 +1,6 @@
+import os
 import subprocess
+import threading
 from os.path import normpath, basename
 
 
@@ -12,32 +14,34 @@ class SubtitleGenerator:
             model_path (str): The path to a language model provided by vosk.
                 Visit https://alphacephei.com/vosk/models for a list of available models.
         """
+        super().__init__()
         self.__model_path = model_path
 
     def get_model(self) -> str:
         """Return model name"""
         return basename(normpath(self.__model_path))
 
-    def generate(self, input_path: str) -> str:
-        """Generate SRT content for input parameter 'input_path'.
+    def generate(self, source_file: str, destin_file: str) -> None:
+        """Start a new thread and generate SRT content for parameter 'input_path'. Store at parameter 'destin_file'.
 
-        Note:
-            Waiting for next vosk-api release to remove subprocess call
-            and implement SRT creation in python.
+       Note:
+           Waiting for next vosk-api release to remove subprocess call
+           and implement SRT creation in python.
 
-        Args:
-             input_path (str): The path of the video file for which subtitles should be generated.
+       Args:
+            source_file (str): The path of the video file for which subtitles should be generated.
+            destin_file (str): The path of the generated .srt file.
+       """
+        threading.Thread(
+            target=self.__generate,
+            args=(source_file, destin_file),
+            daemon=False
+        ).start()
 
-        Returns:
-            string containing the generated subtitles in SRT format
-        """
+    def __generate(self, input_path: str, output_path: str) -> None:
         _ = subprocess.call(['vosk-transcriber',
                              '--model', self.__model_path,
                              '-i', input_path,
-                             '-t', 'srt', '-o', 'tmp.srt'],
+                             '--log-level', 'WARN',
+                             '-t', 'srt', '-o', output_path],
                             stdout=subprocess.PIPE)
-
-        with open('tmp.srt', 'r') as file:
-            srt = file.read()
-
-        return srt

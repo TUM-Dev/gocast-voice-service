@@ -1,20 +1,12 @@
 syntax = "proto3";
 
 service Subtitles {
-  rpc Generate (GenerateSubtitlesRequest) returns (GenerateSubtitlesResponse) {}
+  rpc Generate (GenerateRequest) returns (Empty) {}
 }
 
-message GenerateSubtitlesRequest {
-  string path = 1;
+message GenerateRequest {
+  string source_file = 1;
+  string destin_file = 2;
 }
 
-message GenerateSubtitlesResponse {
-  repeated GenerateSubtitlesResponseData results = 1;
-}
-
-message GenerateSubtitlesResponseData {
-  string subtitles = 1;
-  string model = 2;
-  string source = 3;
-}
-
+message Empty{}
