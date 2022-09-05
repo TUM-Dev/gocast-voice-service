@@ -3,3 +3,6 @@ api:
 vosk:
   models:
     - '../vosk-model-en-us-0.22/'
+volumes:
+  base_source: '/tmp/voice'
+  base_destination: '/tmp/voice'
