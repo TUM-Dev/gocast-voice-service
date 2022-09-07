@@ -96,7 +96,7 @@ async def serve(properties: dict, debug: bool = False) -> None:
 
 
 def main():
-    debug = os.environ["DEBUG"] != ""
+    debug = os.getenv('DEBUG', '') != ""
     logging.basicConfig(level=(logging.INFO, logging.DEBUG)[debug])
 
     default_properties = {
@@ -110,7 +110,7 @@ def main():
 
     try:
         properties = YAMLPropertiesFile(
-            path=os.environ["CONFIG_FILE"],
+            path=os.getenv("CONFIG_FILE", './config.yml'),
             default=default_properties
         ).get()
     except YAMLPropertiesFileError as error:
