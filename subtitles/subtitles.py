@@ -1,4 +1,5 @@
 import asyncio
+import sys
 from concurrent import futures
 from grpc import aio
 from grpc_reflection.v1alpha import reflection
@@ -9,8 +10,7 @@ import grpc
 import subtitles_pb2
 import subtitles_pb2_grpc
 import threading
-
-from config import Config
+from properties import *
 
 
 class SubtitleService(subtitles_pb2_grpc.SubtitlesServicer):
@@ -65,19 +65,19 @@ class SubtitleService(subtitles_pb2_grpc.SubtitlesServicer):
         return subtitles_pb2.GenerateResponse(source=source, results=results)
 
 
-async def serve(cfg: Config, debug: bool = False) -> None:
+async def serve(properties: dict, debug: bool = False) -> None:
     """Starts the grpc server.
 
     Args:
-        cfg (Config): The configuration of the server.
+        properties (dict): The configuration of the server.
         debug (bool): Whether the server should be started in debug mode or not.
     """
     server = aio.server(futures.ThreadPoolExecutor(max_workers=10))  # TODO: How to determine how many workers? Guess?
     subtitles_pb2_grpc.add_SubtitlesServicer_to_server(
         servicer=SubtitleService(
-            model_paths=cfg['vosk']['models'],
-            base_source=cfg['volumes']['base_source'],
-            base_destination=cfg['volumes']['base_destination']),
+            model_paths=properties['vosk']['models'],
+            base_source=properties['volumes']['base_source'],
+            base_destination=properties['volumes']['base_destination']),
         server=server)
 
     if debug:
@@ -88,7 +88,7 @@ async def serve(cfg: Config, debug: bool = False) -> None:
         )
         reflection.enable_server_reflection(service_names, server)
 
-    port = cfg['api']['port']
+    port = properties['api']['port']
     logging.info(f'listening at :{port}')
     server.add_insecure_port(f'[::]:{port}')
     await server.start()
@@ -98,10 +98,26 @@ async def serve(cfg: Config, debug: bool = False) -> None:
 def main():
     debug = os.environ["DEBUG"] != ""
     logging.basicConfig(level=(logging.INFO, logging.DEBUG)[debug])
-    asyncio.run(serve(
-        cfg=Config(os.environ["CONFIG_FILE"]),
-        debug=debug
-    ))
+
+    default_properties = {
+        'port': 50051,
+        'vosk': {'models': []},
+        'volumes': {
+            'base_source': './',
+            'base_destination': './'
+        }
+    }
+
+    try:
+        properties = YAMLPropertiesFile(
+            path=os.environ["CONFIG_FILE"],
+            default=default_properties
+        ).get()
+    except YAMLPropertiesFileError as error:
+        logging.error(error)
+        sys.exit(1)
+
+    asyncio.run(serve(properties, debug))
 
 
 if __name__ == "__main__":
