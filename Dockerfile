@@ -4,6 +4,7 @@ WORKDIR /usr/src/app
 
 ADD subtitles/ ./subtitles/
 ADD requirements.txt .
+ADD config.yml .
 
 # Vosk Dependencies
 RUN apt-get update -y && apt-get install -y ffmpeg
