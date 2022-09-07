@@ -17,7 +17,7 @@ class SubtitlesStub(object):
         self.Generate = channel.unary_unary(
                 '/Subtitles/Generate',
                 request_serializer=subtitles__pb2.GenerateRequest.SerializeToString,
-                response_deserializer=subtitles__pb2.Empty.FromString,
+                response_deserializer=subtitles__pb2.GenerateResponse.FromString,
                 )
 
 
@@ -36,7 +36,7 @@ def add_SubtitlesServicer_to_server(servicer, server):
             'Generate': grpc.unary_unary_rpc_method_handler(
                     servicer.Generate,
                     request_deserializer=subtitles__pb2.GenerateRequest.FromString,
-                    response_serializer=subtitles__pb2.Empty.SerializeToString,
+                    response_serializer=subtitles__pb2.GenerateResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -61,6 +61,6 @@ class Subtitles(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/Subtitles/Generate',
             subtitles__pb2.GenerateRequest.SerializeToString,
-            subtitles__pb2.Empty.FromString,
+            subtitles__pb2.GenerateResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

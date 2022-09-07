@@ -3,6 +3,7 @@ api:
 vosk:
   models:
     - '/data/vosk-model-small-en-us-0.15/'
+    - '/data/vosk-model-small-de-0.15/'
 volumes:
   base_source: '/data'
   base_destination: '/data'

@@ -1,5 +1,6 @@
+import asyncio
 from concurrent import futures
-
+from grpc import aio
 from grpc_reflection.v1alpha import reflection
 import logging
 import os
@@ -7,6 +8,7 @@ import vosk
 import grpc
 import subtitles_pb2
 import subtitles_pb2_grpc
+import threading
 
 from config import Config
 
@@ -25,8 +27,8 @@ class SubtitleService(subtitles_pb2_grpc.SubtitlesServicer):
         self.__base_source = base_source
         self.__base_destination = base_destination
 
-    def Generate(self, req: subtitles_pb2.GenerateRequest,
-                 context: grpc.ServicerContext) -> subtitles_pb2.Empty:
+    async def Generate(self, req: subtitles_pb2.GenerateRequest,
+                       context: grpc.ServicerContext) -> subtitles_pb2.GenerateResponse:
         """ Handler function for an incoming Generate request.
 
         Iterates the generator list and executes `generate` with the
@@ -40,43 +42,43 @@ class SubtitleService(subtitles_pb2_grpc.SubtitlesServicer):
         Returns:
             Empty object
         """
-        for i, gen in enumerate(self.__generators):
-            logging.debug(f'{i}: generating subtitles for {req.source_file}')
+        source: str = os.path.join(self.__base_source, req.source_file)
 
-            source: str = os.path.join(self.__base_source, req.source_file)
-            destination: str = os.path.join(self.__base_destination, req.destin_file)
+        logging.debug(f'checking if {source} exists')
+        if not os.path.isfile(source):
+            await context.abort(grpc.StatusCode.NOT_FOUND, f'can not find source file: {source}')
+            return subtitles_pb2.GenerateResponse()
+
+        if not os.path.isdir(req.destination_folder):
+            await context.abort(grpc.StatusCode.INVALID_ARGUMENT, f"'destination_folder' is not a folder")
+
+        results = []
+        for i, gen in enumerate(self.__generators):
+            filename: str = f'{os.path.basename(os.path.splitext(source)[0])}.{gen.get_language()}.srt'
+            destination: str = os.path.join(self.__base_destination, req.destination_folder, filename)
             logging.debug(f'{i}: source={source}, destination={destination}')
 
-            logging.debug(f'{i}: checking if {source} exists')
-            if not os.path.isfile(source):
-                context.abort(grpc.StatusCode.NOT_FOUND, f'source file ({source}) does not exists')
-                return
+            results.append(subtitles_pb2.GenerateResponseResults(model=gen.get_model(), destination=destination))
 
-            try:
-                gen.generate(source, destination)
-            except Exception as err:
-                context.abort(grpc.StatusCode.UNKNOWN, err)
-                return
+            threading.Thread(target=gen.generate, args=(source, destination)).start()
 
-        return subtitles_pb2.Empty()
+        return subtitles_pb2.GenerateResponse(source=source, results=results)
 
 
-def serve(cfg: Config, debug: bool = False) -> None:
+async def serve(cfg: Config, debug: bool = False) -> None:
     """Starts the grpc server.
 
     Args:
         cfg (Config): The configuration of the server.
         debug (bool): Whether the server should be started in debug mode or not.
     """
-    logging.basicConfig(level=(logging.INFO, logging.DEBUG)[debug])
-
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))  # TODO: How to determine how many workers? Guess?
-    service = SubtitleService(
-        model_paths=cfg['vosk']['models'],
-        base_source=cfg['volumes']['base_source'],
-        base_destination=cfg['volumes']['base_destination']
-    )
-    subtitles_pb2_grpc.add_SubtitlesServicer_to_server(service, server)
+    server = aio.server(futures.ThreadPoolExecutor(max_workers=10))  # TODO: How to determine how many workers? Guess?
+    subtitles_pb2_grpc.add_SubtitlesServicer_to_server(
+        servicer=SubtitleService(
+            model_paths=cfg['vosk']['models'],
+            base_source=cfg['volumes']['base_source'],
+            base_destination=cfg['volumes']['base_destination']),
+        server=server)
 
     if debug:
         logging.debug('starting server with reflection activated.')
@@ -89,12 +91,18 @@ def serve(cfg: Config, debug: bool = False) -> None:
     port = cfg['api']['port']
     logging.info(f'listening at :{port}')
     server.add_insecure_port(f'[::]:{port}')
-    server.start()
-    server.wait_for_termination()
+    await server.start()
+    await server.wait_for_termination()
+
+
+def main():
+    debug = os.environ["DEBUG"] != ""
+    logging.basicConfig(level=(logging.INFO, logging.DEBUG)[debug])
+    asyncio.run(serve(
+        cfg=Config(os.environ["CONFIG_FILE"]),
+        debug=debug
+    ))
 
 
 if __name__ == "__main__":
-    serve(
-        cfg=Config(os.environ["CONFIG_FILE"]),
-        debug=os.environ["DEBUG"] != ""
-    )
+    main()
