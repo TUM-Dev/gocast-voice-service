@@ -1,14 +1,57 @@
 # TUM-Live-Voice-Service
-Microservice that generates subtitles for TUM-Live.
+Microservice that generates subtitles for [TUM-Live](https://live.rbg.tum.de).
 
-## API
+## Usage
+
+### Workflow
+
+```                                                                
+                                               2.1.) Generate .srt file ┌──────┐
+                                                        ┌──────────────►│ .srt │
+                                                        │               └──────┘
+                                                        │             
+                                                        │               
+                                                        │
+                                                        │
+                                                        │
+                                                 ┌──────┴────────┐
+                                                 │               │
+                                                 │               │
+┌──────────┐1.) gRPC Request: Subtitles.Generate │               │
+│          ├────────────────────────────────────►│     VOICE     │
+│  CLIENT  │                                     │    SERVICE    │
+│          │◄────────────────────────────────────┤               │
+└──────────┘       2.2.) gRPC Response           │               │
+                                                 │               │
+                                                 └───────────────┘
+```
+
+### API
 
 ```bash
 $ grpcurl -plaintext localhost:50051 list Subtitles
+
 Subtitles.Generate
 ```
 
-## Get it started 
+```bash
+$ grpcurl -plaintext \
+  -d '{"source_file":"120.mp4", "destination_folder":"."}' \
+  -import-path ./protobufs \ 
+  -proto subtitles.proto localhost:50051 Subtitles.Generate
+  
+{
+  "source": ".../120.mp4",
+  "results": [
+    {
+      "model": "vosk-model-small-en-us-0.15",
+      "destination": "..././120.en.srt"
+    }
+  ]
+}
+```
+
+## Installation
 
 ### Run with virtual environment
 
@@ -36,7 +79,7 @@ Or simply use an open source IDE like [PyCharm CE](https://www.jetbrains.com/pyc
 #### build
 
 ```bash
-$ docker build --no-cache . -t voice-service-image
+$ docker build --no-cache -t voice-service-image .
 [+] Building 0.4s (1/10)...
 ```
 
@@ -46,8 +89,12 @@ $ docker build --no-cache . -t voice-service-image
 $ docker run -p 50051:50051 \
   --name voice-service \
   -v /srv/static:/data \
-  -e CONFIG_FILE=/etc/config.yml \
+  -e CONFIG_FILE=./config.yml \
   -e DEBUG=.\
   -d \
   voice-service-image
 ```
+
+## License
+
+[MIT](https://choosealicense.com/licenses/mit/)
