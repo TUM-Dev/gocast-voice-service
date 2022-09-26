@@ -4,9 +4,9 @@ import threading
 from concurrent import futures
 from grpc import aio
 from grpc_reflection.v1alpha import reflection
+from vosk_generator import SubtitleGenerator
 import logging
 import os
-import vosk
 import grpc
 import subtitles_pb2
 import subtitles_pb2_grpc
@@ -24,7 +24,7 @@ class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
             receiver: The address of the receiver service.
         """
         logging.debug(f'loading SubtitleService with models: {model_paths}')
-        self.__generators = [vosk.SubtitleGenerator(path) for path in model_paths]
+        self.__generators = [SubtitleGenerator(path) for path in model_paths]
         self.__receiver = receiver
 
     async def Generate(self, req: subtitles_pb2.GenerateRequest,
