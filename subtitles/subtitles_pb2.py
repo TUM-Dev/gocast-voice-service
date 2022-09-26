@@ -14,44 +14,47 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0fsubtitles.proto\"B\n\x0fGenerateRequest\x12\x13\n\x0bsource_file\x18\x01 \x01(\t\x12\x1a\n\x12\x64\x65stination_folder\x18\x02 \x01(\t\"M\n\x10GenerateResponse\x12\x0e\n\x06source\x18\x01 \x01(\t\x12)\n\x07results\x18\x02 \x03(\x0b\x32\x18.GenerateResponseResults\"=\n\x17GenerateResponseResults\x12\r\n\x05model\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65stination\x18\x02 \x01(\t2>\n\tSubtitles\x12\x31\n\x08Generate\x12\x10.GenerateRequest\x1a\x11.GenerateResponse\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0fsubtitles.proto\x12\x05voice\"H\n\x0eReceiveRequest\x12\x11\n\tstream_id\x18\x01 \x01(\x05\x12\x11\n\tsubtitles\x18\x02 \x01(\t\x12\x10\n\x08language\x18\x03 \x01(\t\"9\n\x0fGenerateRequest\x12\x11\n\tstream_id\x18\x01 \x01(\x05\x12\x13\n\x0bsource_file\x18\x02 \x01(\t\"\x07\n\x05\x45mpty2G\n\x11SubtitleGenerator\x12\x32\n\x08Generate\x12\x16.voice.GenerateRequest\x1a\x0c.voice.Empty\"\x00\x32\x44\n\x10SubtitleReceiver\x12\x30\n\x07Receive\x12\x15.voice.ReceiveRequest\x1a\x0c.voice.Empty\"\x00\x62\x06proto3')
 
 
 
+_RECEIVEREQUEST = DESCRIPTOR.message_types_by_name['ReceiveRequest']
 _GENERATEREQUEST = DESCRIPTOR.message_types_by_name['GenerateRequest']
-_GENERATERESPONSE = DESCRIPTOR.message_types_by_name['GenerateResponse']
-_GENERATERESPONSERESULTS = DESCRIPTOR.message_types_by_name['GenerateResponseResults']
+_EMPTY = DESCRIPTOR.message_types_by_name['Empty']
+ReceiveRequest = _reflection.GeneratedProtocolMessageType('ReceiveRequest', (_message.Message,), {
+  'DESCRIPTOR' : _RECEIVEREQUEST,
+  '__module__' : 'subtitles_pb2'
+  # @@protoc_insertion_point(class_scope:voice.ReceiveRequest)
+  })
+_sym_db.RegisterMessage(ReceiveRequest)
+
 GenerateRequest = _reflection.GeneratedProtocolMessageType('GenerateRequest', (_message.Message,), {
   'DESCRIPTOR' : _GENERATEREQUEST,
   '__module__' : 'subtitles_pb2'
-  # @@protoc_insertion_point(class_scope:GenerateRequest)
+  # @@protoc_insertion_point(class_scope:voice.GenerateRequest)
   })
 _sym_db.RegisterMessage(GenerateRequest)
 
-GenerateResponse = _reflection.GeneratedProtocolMessageType('GenerateResponse', (_message.Message,), {
-  'DESCRIPTOR' : _GENERATERESPONSE,
+Empty = _reflection.GeneratedProtocolMessageType('Empty', (_message.Message,), {
+  'DESCRIPTOR' : _EMPTY,
   '__module__' : 'subtitles_pb2'
-  # @@protoc_insertion_point(class_scope:GenerateResponse)
+  # @@protoc_insertion_point(class_scope:voice.Empty)
   })
-_sym_db.RegisterMessage(GenerateResponse)
+_sym_db.RegisterMessage(Empty)
 
-GenerateResponseResults = _reflection.GeneratedProtocolMessageType('GenerateResponseResults', (_message.Message,), {
-  'DESCRIPTOR' : _GENERATERESPONSERESULTS,
-  '__module__' : 'subtitles_pb2'
-  # @@protoc_insertion_point(class_scope:GenerateResponseResults)
-  })
-_sym_db.RegisterMessage(GenerateResponseResults)
-
-_SUBTITLES = DESCRIPTOR.services_by_name['Subtitles']
+_SUBTITLEGENERATOR = DESCRIPTOR.services_by_name['SubtitleGenerator']
+_SUBTITLERECEIVER = DESCRIPTOR.services_by_name['SubtitleReceiver']
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
-  _GENERATEREQUEST._serialized_start=19
-  _GENERATEREQUEST._serialized_end=85
-  _GENERATERESPONSE._serialized_start=87
-  _GENERATERESPONSE._serialized_end=164
-  _GENERATERESPONSERESULTS._serialized_start=166
-  _GENERATERESPONSERESULTS._serialized_end=227
-  _SUBTITLES._serialized_start=229
-  _SUBTITLES._serialized_end=291
+  _RECEIVEREQUEST._serialized_start=26
+  _RECEIVEREQUEST._serialized_end=98
+  _GENERATEREQUEST._serialized_start=100
+  _GENERATEREQUEST._serialized_end=157
+  _EMPTY._serialized_start=159
+  _EMPTY._serialized_end=166
+  _SUBTITLEGENERATOR._serialized_start=168
+  _SUBTITLEGENERATOR._serialized_end=239
+  _SUBTITLERECEIVER._serialized_start=241
+  _SUBTITLERECEIVER._serialized_end=309
 # @@protoc_insertion_point(module_scope)

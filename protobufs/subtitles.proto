@@ -1,20 +1,25 @@
 syntax = "proto3";
+package voice;
 
-service Subtitles {
-  rpc Generate (GenerateRequest) returns (GenerateResponse) {}
+// Implemented in voice-service
+service SubtitleGenerator {
+  rpc Generate (GenerateRequest) returns (Empty) {}
+}
+
+// Implemented in worker and tum-live
+service SubtitleReceiver {
+  rpc Receive (ReceiveRequest) returns (Empty) {}
+}
+
+message ReceiveRequest {
+  int32 stream_id = 1;
+  string subtitles = 2;
+  string language = 3;
 }
 
 message GenerateRequest {
-  string source_file = 1;
-  string destination_folder = 2;
+  int32 stream_id = 1;
+  string source_file = 2;
 }
 
-message GenerateResponse{
-  string source = 1;
-  repeated GenerateResponseResults results = 2;
-}
-
-message GenerateResponseResults{
-  string model = 1;
-  string destination = 2;
-}
+message Empty {}

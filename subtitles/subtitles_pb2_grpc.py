@@ -5,8 +5,9 @@ import grpc
 import subtitles_pb2 as subtitles__pb2
 
 
-class SubtitlesStub(object):
-    """Missing associated documentation comment in .proto file."""
+class SubtitleGeneratorStub(object):
+    """Implemented in voice-service
+    """
 
     def __init__(self, channel):
         """Constructor.
@@ -15,14 +16,15 @@ class SubtitlesStub(object):
             channel: A grpc.Channel.
         """
         self.Generate = channel.unary_unary(
-                '/Subtitles/Generate',
+                '/voice.SubtitleGenerator/Generate',
                 request_serializer=subtitles__pb2.GenerateRequest.SerializeToString,
-                response_deserializer=subtitles__pb2.GenerateResponse.FromString,
+                response_deserializer=subtitles__pb2.Empty.FromString,
                 )
 
 
-class SubtitlesServicer(object):
-    """Missing associated documentation comment in .proto file."""
+class SubtitleGeneratorServicer(object):
+    """Implemented in voice-service
+    """
 
     def Generate(self, request, context):
         """Missing associated documentation comment in .proto file."""
@@ -31,22 +33,23 @@ class SubtitlesServicer(object):
         raise NotImplementedError('Method not implemented!')
 
 
-def add_SubtitlesServicer_to_server(servicer, server):
+def add_SubtitleGeneratorServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'Generate': grpc.unary_unary_rpc_method_handler(
                     servicer.Generate,
                     request_deserializer=subtitles__pb2.GenerateRequest.FromString,
-                    response_serializer=subtitles__pb2.GenerateResponse.SerializeToString,
+                    response_serializer=subtitles__pb2.Empty.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'Subtitles', rpc_method_handlers)
+            'voice.SubtitleGenerator', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
  # This class is part of an EXPERIMENTAL API.
-class Subtitles(object):
-    """Missing associated documentation comment in .proto file."""
+class SubtitleGenerator(object):
+    """Implemented in voice-service
+    """
 
     @staticmethod
     def Generate(request,
@@ -59,8 +62,72 @@ class Subtitles(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/Subtitles/Generate',
+        return grpc.experimental.unary_unary(request, target, '/voice.SubtitleGenerator/Generate',
             subtitles__pb2.GenerateRequest.SerializeToString,
-            subtitles__pb2.GenerateResponse.FromString,
+            subtitles__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+
+class SubtitleReceiverStub(object):
+    """Implemented in worker and tum-live
+    """
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.Receive = channel.unary_unary(
+                '/voice.SubtitleReceiver/Receive',
+                request_serializer=subtitles__pb2.ReceiveRequest.SerializeToString,
+                response_deserializer=subtitles__pb2.Empty.FromString,
+                )
+
+
+class SubtitleReceiverServicer(object):
+    """Implemented in worker and tum-live
+    """
+
+    def Receive(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_SubtitleReceiverServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'Receive': grpc.unary_unary_rpc_method_handler(
+                    servicer.Receive,
+                    request_deserializer=subtitles__pb2.ReceiveRequest.FromString,
+                    response_serializer=subtitles__pb2.Empty.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'voice.SubtitleReceiver', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+
+
+ # This class is part of an EXPERIMENTAL API.
+class SubtitleReceiver(object):
+    """Implemented in worker and tum-live
+    """
+
+    @staticmethod
+    def Receive(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/voice.SubtitleReceiver/Receive',
+            subtitles__pb2.ReceiveRequest.SerializeToString,
+            subtitles__pb2.Empty.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

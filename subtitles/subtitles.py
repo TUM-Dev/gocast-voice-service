@@ -1,5 +1,6 @@
 import asyncio
 import sys
+import threading
 from concurrent import futures
 from grpc import aio
 from grpc_reflection.v1alpha import reflection
@@ -9,26 +10,25 @@ import vosk
 import grpc
 import subtitles_pb2
 import subtitles_pb2_grpc
-import threading
 from properties import *
 
 
-class SubtitleService(subtitles_pb2_grpc.SubtitlesServicer):
+class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
     """grpc service for subtitles"""
 
-    def __init__(self, model_paths: [str], base_source: str, base_destination: str) -> None:
+    def __init__(self, model_paths: [str], receiver: str) -> None:
         """Initialize service with a given array of paths to models.
 
         Args:
             model_paths: An array of paths to models for subtitle generation.
+            receiver: The address of the receiver service.
         """
         logging.debug(f'loading SubtitleService with models: {model_paths}')
         self.__generators = [vosk.SubtitleGenerator(path) for path in model_paths]
-        self.__base_source = base_source
-        self.__base_destination = base_destination
+        self.__receiver = receiver
 
     async def Generate(self, req: subtitles_pb2.GenerateRequest,
-                       context: grpc.ServicerContext) -> subtitles_pb2.GenerateResponse:
+                       context: grpc.ServicerContext) -> subtitles_pb2.Empty:
         """ Handler function for an incoming Generate request.
 
         Iterates the generator list and executes `generate` with the
@@ -40,29 +40,29 @@ class SubtitleService(subtitles_pb2_grpc.SubtitlesServicer):
                 Visit https://grpc.github.io/grpc/python/grpc.html#service-side-context for more information.
 
         Returns:
-            Empty object
+            subtitles_pb2.Empty
         """
-        source: str = os.path.join(self.__base_source, req.source_file)
+        source: str = req.source_file
 
         logging.debug(f'checking if {source} exists')
         if not os.path.isfile(source):
             await context.abort(grpc.StatusCode.NOT_FOUND, f'can not find source file: {source}')
-            return subtitles_pb2.GenerateResponse()
+            return subtitles_pb2.Empty()
 
-        if not os.path.isdir(req.destination_folder):
-            await context.abort(grpc.StatusCode.INVALID_ARGUMENT, f"'destination_folder' is not a folder")
-
-        results = []
         for i, gen in enumerate(self.__generators):
-            filename: str = f'{os.path.basename(os.path.splitext(source)[0])}.{gen.get_language()}.srt'
-            destination: str = os.path.join(self.__base_destination, req.destination_folder, filename)
-            logging.debug(f'{i}: source={source}, destination={destination}')
+            threading.Thread(target=self.__generate, args=(gen, source, req.stream_id)).start()
 
-            results.append(subtitles_pb2.GenerateResponseResults(model=gen.get_model(), destination=destination))
+        return subtitles_pb2.Empty()
 
-            threading.Thread(target=gen.generate, args=(source, destination)).start()
+    def __generate(self, gen, source, stream_id):
+        subtitles = gen.generate(source)
+        logging.debug(f'stream_id={stream_id}; subtitles={subtitles}')
 
-        return subtitles_pb2.GenerateResponse(source=source, results=results)
+        logging.info(f'trying to connect to receiver @ {self.__receiver}')
+        with grpc.insecure_channel(self.__receiver) as channel:
+            stub = subtitles_pb2_grpc.SubtitleReceiverStub(channel)
+            stub.Receive(
+                subtitles_pb2.ReceiveRequest(stream_id=stream_id, subtitles=subtitles, language='en'))
 
 
 async def serve(properties: dict, debug: bool = False) -> None:
@@ -72,21 +72,21 @@ async def serve(properties: dict, debug: bool = False) -> None:
         properties (dict): The configuration of the server.
         debug (bool): Whether the server should be started in debug mode or not.
     """
-    server = aio.server(futures.ThreadPoolExecutor(max_workers=10))  # TODO: How to determine how many workers? Guess?
-    subtitles_pb2_grpc.add_SubtitlesServicer_to_server(
-        servicer=SubtitleService(
+    server = aio.server(
+        futures.ThreadPoolExecutor(max_workers=10))  # TODO: How to determine how many workers? Guess?
+    subtitles_pb2_grpc.add_SubtitleGeneratorServicer_to_server(
+        servicer=SubtitleServerService(
             model_paths=properties['vosk']['models'],
-            base_source=properties['volumes']['base_source'],
-            base_destination=properties['volumes']['base_destination']),
+            receiver=f'{properties["receiver"]["host"]}:{properties["receiver"]["port"]}'),
         server=server)
 
     if debug:
         logging.debug('starting server with reflection activated.')
-        service_names = (
-            subtitles_pb2.DESCRIPTOR.services_by_name['Subtitles'].full_name,
-            reflection.SERVICE_NAME,
-        )
-        reflection.enable_server_reflection(service_names, server)
+    service_names = (
+        subtitles_pb2.DESCRIPTOR.services_by_name['SubtitleGenerator'].full_name,
+        reflection.SERVICE_NAME,
+    )
+    reflection.enable_server_reflection(service_names, server)
 
     port = properties['api']['port']
     logging.info(f'listening at :{port}')
@@ -100,12 +100,9 @@ def main():
     logging.basicConfig(level=(logging.INFO, logging.DEBUG)[debug])
 
     default_properties = {
-        'port': 50051,
+        'api': {'port': 50055},
+        'receiver': {'host': 'localhost', 'port': '50053'},
         'vosk': {'models': []},
-        'volumes': {
-            'base_source': './',
-            'base_destination': './'
-        }
     }
 
     try:

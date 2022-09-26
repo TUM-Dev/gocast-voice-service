@@ -1,4 +1,5 @@
 import subprocess
+import tempfile
 from os.path import normpath, basename
 
 
@@ -22,8 +23,8 @@ class SubtitleGenerator:
     def get_language(self) -> str:
         return 'en'  # TODO: Change to real language
 
-    def generate(self, source: str, destination: str) -> None:
-        """Generate SRT content for parameter 'input_path'. Store at parameter 'destin_file'.
+    def generate(self, source: str) -> str:
+        """Generate and return SRT content for parameter 'input_path'.
 
        Note:
            Waiting for next vosk-api release to remove subprocess call
@@ -31,10 +32,13 @@ class SubtitleGenerator:
 
        Args:
             source (str): The path of the video file for which subtitles should be generated.
-            destination (str): The path of the generated .srt file.
        """
-        _ = subprocess.call(['vosk-transcriber',
-                             '--model', self.__model_path,
-                             '-i', source,
-                             '-t', 'srt',
-                             '-o', destination])
+        with tempfile.NamedTemporaryFile() as tmp:
+            _ = subprocess.call(['vosk-transcriber',
+                                 '--model', self.__model_path,
+                                 '-i', source,
+                                 '-t', 'srt',
+                                 '-o', tmp.name])
+
+            subtitles = tmp.read()
+            return subtitles
