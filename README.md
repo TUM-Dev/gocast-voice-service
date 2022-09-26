@@ -1,54 +1,45 @@
 # TUM-Live-Voice-Service
+
 Microservice that generates subtitles for [TUM-Live](https://live.rbg.tum.de).
 
 ## Usage
 
 ### Workflow
 
-```                                                                
-                                               2.1.) Generate .srt file ┌──────┐
-                                                        ┌──────────────►│ .srt │
-                                                        │               └──────┘
-                                                        │             
-                                                        │               
-                                                        │
-                                                        │
-                                                        │
-                                                 ┌──────┴────────┐
-                                                 │               │
-                                                 │               │
-┌──────────┐1.) gRPC Request: Subtitles.Generate │               │
-│          ├────────────────────────────────────►│     VOICE     │
-│  CLIENT  │                                     │    SERVICE    │
-│          │◄────────────────────────────────────┤               │
-└──────────┘       2.2.) gRPC Response           │               │
-                                                 │               │
-                                                 └───────────────┘
+```
+                     ┌──────────┐
+      ┌──────────────┤  WORKER  │
+      │              └──────────┘
+      │
+      │
+      │ 1) .NotifyUploadFinished
+      │
+      │
+      │
+      │
+┌─────▼──────┐       2) .Generate         ┌───────────┐
+│            ├────────────────────────────►           │
+│            │                            │   VOICE   │
+│  TUM-LIVE  │                            │  SERVICE  │
+│            │                            │           │
+├────────────◄────────────────────────────┼───────────┤
+│  RECEIVER  │        3) .Receive         │ GENERATOR │
+└────────────┘                            └───────────┘
 ```
 
 ### API
 
 ```bash
-$ grpcurl -plaintext localhost:50051 list Subtitles
+$ grpcurl -plaintext localhost:50055 list voice.SubtitleGenerator
 
-Subtitles.Generate
+voice.SubtitleGenerator.Generate
 ```
 
 ```bash
 $ grpcurl -plaintext \
-  -d '{"source_file":"120.mp4", "destination_folder":"."}' \
-  -import-path ./protobufs \ 
-  -proto subtitles.proto localhost:50051 Subtitles.Generate
-  
-{
-  "source": ".../120.mp4",
-  "results": [
-    {
-      "model": "vosk-model-small-en-us-0.15",
-      "destination": "..././120.en.srt"
-    }
-  ]
-}
+  -d '{"stream_id":1, "source_file":"/tmp/120.mp4"}' \
+  -import-path ./protobufs -proto subtitles.proto \
+  localhost:50055 voice.SubtitleGenerator.Generate
 ```
 
 ## Installation
@@ -83,10 +74,10 @@ $ docker build --no-cache -t voice-service-image .
 [+] Building 0.4s (1/10)...
 ```
 
-#### run application 
+#### run application
 
 ```bash
-$ docker run -p 50051:50051 \
+$ docker run -p 50055:50055 \
   --name voice-service \
   -v /srv/static:/data \
   -e CONFIG_FILE=./config.yml \
