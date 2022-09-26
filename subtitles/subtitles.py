@@ -16,15 +16,15 @@ from properties import *
 class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
     """grpc service for subtitles"""
 
-    def __init__(self, model_paths: [str], receiver: str) -> None:
+    def __init__(self, models: [object], receiver: str) -> None:
         """Initialize service with a given array of paths to models.
 
         Args:
-            model_paths: An array of paths to models for subtitle generation.
+            models: An array of model objects.
             receiver: The address of the receiver service.
         """
-        logging.debug(f'loading SubtitleService with models: {model_paths}')
-        self.__generators = [SubtitleGenerator(path) for path in model_paths]
+        logging.debug(f'loading SubtitleService with models: {models}')
+        self.__generators = [SubtitleGenerator(model['path'], model['lang']) for model in models]
         self.__receiver = receiver
 
     async def Generate(self, req: subtitles_pb2.GenerateRequest,
@@ -54,15 +54,15 @@ class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
 
         return subtitles_pb2.Empty()
 
-    def __generate(self, gen, source, stream_id):
+    def __generate(self, gen: SubtitleGenerator, source: str, stream_id: str) -> None:
         subtitles = gen.generate(source)
-        logging.debug(f'stream_id={stream_id}; subtitles={subtitles}')
+        logging.debug(f'stream_id={stream_id}; subtitles={subtitles[:32]}')
 
         logging.info(f'trying to connect to receiver @ {self.__receiver}')
         with grpc.insecure_channel(self.__receiver) as channel:
             stub = subtitles_pb2_grpc.SubtitleReceiverStub(channel)
             stub.Receive(
-                subtitles_pb2.ReceiveRequest(stream_id=stream_id, subtitles=subtitles, language='en'))
+                subtitles_pb2.ReceiveRequest(stream_id=stream_id, subtitles=subtitles, language=gen.get_language()))
 
 
 async def serve(properties: dict, debug: bool = False) -> None:
@@ -76,7 +76,7 @@ async def serve(properties: dict, debug: bool = False) -> None:
         futures.ThreadPoolExecutor(max_workers=10))  # TODO: How to determine how many workers? Guess?
     subtitles_pb2_grpc.add_SubtitleGeneratorServicer_to_server(
         servicer=SubtitleServerService(
-            model_paths=properties['vosk']['models'],
+            models=properties['vosk']['models'],
             receiver=f'{properties["receiver"]["host"]}:{properties["receiver"]["port"]}'),
         server=server)
 
