@@ -1,0 +1,11 @@
+api:
+  port: 50055
+receiver:
+  host: localhost
+  port: 50053
+vosk:
+  models:
+    - path: '/data/vosk-model-small-en-us-0.15/'
+      lang: 'en'
+    - path: '/data/vosk-model-small-de-0.15/'
+      lang: 'de'
