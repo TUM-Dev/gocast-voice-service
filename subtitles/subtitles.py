@@ -1,16 +1,15 @@
-import asyncio
 import sys
 import threading
-from concurrent import futures
-from grpc import aio
-from grpc_reflection.v1alpha import reflection
-from vosk_generator import SubtitleGenerator
 import logging
 import os
+from properties import *
+from concurrent import futures
+from grpc_reflection.v1alpha import reflection
+from vosk_generator import SubtitleGenerator
+
 import grpc
 import subtitles_pb2
 import subtitles_pb2_grpc
-from properties import *
 
 
 class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
@@ -27,7 +26,7 @@ class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
         self.__generators = [SubtitleGenerator(model['path'], model['lang']) for model in models]
         self.__receiver = receiver
 
-    async def Generate(self, req: subtitles_pb2.GenerateRequest,
+    def Generate(self, req: subtitles_pb2.GenerateRequest,
                        context: grpc.ServicerContext) -> subtitles_pb2.Empty:
         """ Handler function for an incoming Generate request.
 
@@ -46,7 +45,7 @@ class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
 
         logging.debug(f'checking if {source} exists')
         if not os.path.isfile(source):
-            await context.abort(grpc.StatusCode.NOT_FOUND, f'can not find source file: {source}')
+            context.abort(grpc.StatusCode.NOT_FOUND, f'can not find source file: {source}')
             return subtitles_pb2.Empty()
 
         for i, gen in enumerate(self.__generators):
@@ -65,15 +64,14 @@ class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
                 subtitles_pb2.ReceiveRequest(stream_id=stream_id, subtitles=subtitles, language=gen.get_language()))
 
 
-async def serve(properties: dict, debug: bool = False) -> None:
+def serve(properties: dict, debug: bool = False) -> None:
     """Starts the grpc server.
 
     Args:
         properties (dict): The configuration of the server.
         debug (bool): Whether the server should be started in debug mode or not.
     """
-    server = aio.server(
-        futures.ThreadPoolExecutor(max_workers=10))  # TODO: How to determine how many workers? Guess?
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))  # TODO: How to determine how many workers? Guess?
     subtitles_pb2_grpc.add_SubtitleGeneratorServicer_to_server(
         servicer=SubtitleServerService(
             models=properties['vosk']['models'],
@@ -82,17 +80,17 @@ async def serve(properties: dict, debug: bool = False) -> None:
 
     if debug:
         logging.debug('starting server with reflection activated.')
-    service_names = (
-        subtitles_pb2.DESCRIPTOR.services_by_name['SubtitleGenerator'].full_name,
-        reflection.SERVICE_NAME,
-    )
-    reflection.enable_server_reflection(service_names, server)
+        service_names = (
+            subtitles_pb2.DESCRIPTOR.services_by_name['SubtitleGenerator'].full_name,
+            reflection.SERVICE_NAME,
+        )
+        reflection.enable_server_reflection(service_names, server)
 
     port = properties['api']['port']
     logging.info(f'listening at :{port}')
     server.add_insecure_port(f'[::]:{port}')
-    await server.start()
-    await server.wait_for_termination()
+    server.start()
+    server.wait_for_termination()
 
 
 def main():
@@ -114,7 +112,7 @@ def main():
         logging.error(error)
         sys.exit(1)
 
-    asyncio.run(serve(properties, debug))
+    serve(properties, debug)
 
 
 if __name__ == "__main__":
