@@ -70,7 +70,7 @@ class SubtitleGenerator(object):
 
 
 class SubtitleReceiverStub(object):
-    """Implemented in worker and tum-live
+    """Implemented in tum-live
     """
 
     def __init__(self, channel):
@@ -87,7 +87,7 @@ class SubtitleReceiverStub(object):
 
 
 class SubtitleReceiverServicer(object):
-    """Implemented in worker and tum-live
+    """Implemented in tum-live
     """
 
     def Receive(self, request, context):
@@ -112,7 +112,7 @@ def add_SubtitleReceiverServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class SubtitleReceiver(object):
-    """Implemented in worker and tum-live
+    """Implemented in tum-live
     """
 
     @staticmethod

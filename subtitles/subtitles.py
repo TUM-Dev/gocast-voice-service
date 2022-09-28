@@ -5,7 +5,7 @@ import os
 from properties import *
 from concurrent import futures
 from grpc_reflection.v1alpha import reflection
-from vosk_generator import SubtitleGenerator
+from vosk_generator import SubtitleGenerator, set_vosk_log_level
 
 import grpc
 import subtitles_pb2
@@ -23,11 +23,12 @@ class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
             receiver: The address of the receiver service.
         """
         logging.debug(f'loading SubtitleService with models: {models}')
-        self.__generators = [SubtitleGenerator(model['path'], model['lang']) for model in models]
+        self.__generators = {model['lang']: SubtitleGenerator(model['path']) for model in models}
+
         self.__receiver = receiver
 
     def Generate(self, req: subtitles_pb2.GenerateRequest,
-                       context: grpc.ServicerContext) -> subtitles_pb2.Empty:
+                 context: grpc.ServicerContext) -> subtitles_pb2.Empty:
         """ Handler function for an incoming Generate request.
 
         Iterates the generator list and executes `generate` with the
@@ -42,26 +43,37 @@ class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
             subtitles_pb2.Empty
         """
         source: str = req.source_file
+        language: str = req.language
+        stream_id: str = req.stream_id
 
         logging.debug(f'checking if {source} exists')
         if not os.path.isfile(source):
             context.abort(grpc.StatusCode.NOT_FOUND, f'can not find source file: {source}')
             return subtitles_pb2.Empty()
 
-        for i, gen in enumerate(self.__generators):
-            threading.Thread(target=self.__generate, args=(gen, source, req.stream_id)).start()
+        logging.debug(f'checking if {language} is configured')
+        if language not in self.__generators:
+            context.abort(grpc.StatusCode.NOT_FOUND, f'language({language}) not configured')
+            return subtitles_pb2.Empty()
+
+        logging.debug(f'starting thread to generate subtitles')
+        generator: SubtitleGenerator = self.__generators[language]
+        threading.Thread(target=self.__generate, args=(generator, source, stream_id, language)).start()
 
         return subtitles_pb2.Empty()
 
-    def __generate(self, gen: SubtitleGenerator, source: str, stream_id: str) -> None:
+    def __generate(self, gen: SubtitleGenerator, source: str, stream_id: str, language: str) -> None:
         subtitles = gen.generate(source)
         logging.debug(f'stream_id={stream_id}; subtitles={subtitles[:32]}')
 
         logging.info(f'trying to connect to receiver @ {self.__receiver}')
         with grpc.insecure_channel(self.__receiver) as channel:
             stub = subtitles_pb2_grpc.SubtitleReceiverStub(channel)
-            stub.Receive(
-                subtitles_pb2.ReceiveRequest(stream_id=stream_id, subtitles=subtitles, language=gen.get_language()))
+            request = subtitles_pb2.ReceiveRequest(
+                stream_id=stream_id,
+                subtitles=subtitles,
+                language=language)
+            stub.Receive(request)
 
 
 def serve(properties: dict, debug: bool = False) -> None:
@@ -111,6 +123,8 @@ def main():
     except YAMLPropertiesFileError as error:
         logging.error(error)
         sys.exit(1)
+
+    set_vosk_log_level(debug)
 
     serve(properties, debug)
 

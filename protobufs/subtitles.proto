@@ -6,7 +6,7 @@ service SubtitleGenerator {
   rpc Generate (GenerateRequest) returns (Empty) {}
 }
 
-// Implemented in worker and tum-live
+// Implemented in tum-live
 service SubtitleReceiver {
   rpc Receive (ReceiveRequest) returns (Empty) {}
 }
@@ -20,6 +20,7 @@ message ReceiveRequest {
 message GenerateRequest {
   int32 stream_id = 1;
   string source_file = 2;
+  string language = 3;
 }
 
 message Empty {}
