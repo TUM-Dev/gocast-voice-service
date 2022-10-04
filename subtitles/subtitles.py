@@ -110,7 +110,9 @@ def main():
             path=os.getenv("CONFIG_FILE", './config.yml'),
             default=default_properties
         ).get()
-    except YAMLPropertiesFileError as error:
+        properties = EnvProperties(default=properties).get()
+        print(properties)
+    except PropertyError as error:
         logging.error(error)
         sys.exit(1)
 
