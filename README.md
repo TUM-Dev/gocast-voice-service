@@ -86,6 +86,25 @@ $ docker run -p 50055:50055 \
   voice-service-image
 ```
 
+### Configuration 
+
+You can configure the application with: 
+- YAML file 
+- .env file and environment variables
+
+**Configuration precedence** 
+
+`>` = _overwrites_: `environment > .env > .yml`
+
+#### Examplary .env file 
+
+```bash
+API_PORT=51000
+REC_HOST=127.0.0.1
+REC_PORT=51001
+VOSK_MODELS=/data/fr:fr,/data/en:en
+```
+
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
