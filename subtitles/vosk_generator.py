@@ -1,7 +1,4 @@
-import logging
 import subprocess
-import tempfile
-from os.path import normpath, basename
 from vosk import Model, KaldiRecognizer
 
 SAMPLE_RATE = 16000
