@@ -8,6 +8,12 @@ class ModelLoadError(Exception):
 
 
 def download_models(model_dir: str, download_urls: [str]) -> None:
+    """Download language models if non-existing.
+
+    Args:
+        model_dir (str): The path to where the language models should be stored.
+        download_urls ([str]): URLs pointing to VOSK Language Models.
+    """
     try:
         os.mkdir(os.path.join(model_dir, '.lock'))
     except FileExistsError as err:
