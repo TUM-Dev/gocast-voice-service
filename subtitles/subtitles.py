@@ -10,7 +10,7 @@ import os
 import grpc
 import subtitles_pb2
 import subtitles_pb2_grpc
-from properties import *
+from properties import YAMLPropertiesFile, EnvProperties, PropertyError
 
 
 class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
