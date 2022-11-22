@@ -1,16 +1,20 @@
-import logging
 import subprocess
-import tempfile
-from os.path import normpath, basename
-from vosk import Model, KaldiRecognizer
+
+import vosk
+from vosk import Model, KaldiRecognizer, SetLogLevel
 
 SAMPLE_RATE = 16000
+
+
+def set_vosk_log_level(debug: bool) -> None:
+    if not debug:
+        vosk.SetLogLevel(-1)
 
 
 class SubtitleGenerator:
     """Generate Subtitles with a given model."""
 
-    def __init__(self, model_path: str, model_lang: str) -> None:
+    def __init__(self, model_path: str) -> None:
         """Initialize SubtitleGenerator with a given model.
 
         Args:
@@ -18,14 +22,8 @@ class SubtitleGenerator:
                 Visit https://alphacephei.com/vosk/models for a list of available models.
         """
         super().__init__()
-        self.__model_path = model_path
-        self.__model_lang = model_lang
         self.__recognizer = KaldiRecognizer(Model(model_path=model_path), SAMPLE_RATE)
         self.__recognizer.SetWords(True)
-
-    def get_language(self) -> str:
-        """Return language of generator"""
-        return self.__model_lang
 
     def generate(self, source: str) -> str:
         """Generate and return VTT content for parameter 'source'.
