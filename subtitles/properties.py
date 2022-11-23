@@ -64,13 +64,23 @@ class EnvProperties:
         properties['receiver']['host'] = os.getenv('REC_HOST', properties['receiver']['host'])
         properties['receiver']['port'] = os.getenv('REC_PORT', properties['receiver']['port'])
 
+        properties['vosk']['model_dir'] = os.getenv('VOSK_MODEL_DIR', properties['vosk']['model_dir'])
+
+        # format: https://x.com,https://y.com
+        if os.getenv('VOSK_DWNLD_URLS'):
+            properties['vosk']['download_urls'] = os.getenv('VOSK_DWNLD_URLS').split(',')
+
         # format: /models/de:de,/models/en:en
         if os.getenv('VOSK_MODELS'):
-            models = [{'path': model.split(':')[0], 'lang': model.split(':')[1]}
+            models = [self.__to_model_obj(model)
                       for model in os.getenv('VOSK_MODELS').split(',')]
 
             properties['vosk']['models'] = models
         return properties
+
+    def __to_model_obj(self, model: str):
+        model_lang_pair = model.split(':')
+        return {'path': model_lang_pair[0], 'lang': model_lang_pair[1]}
 
 
 def _validate(file_path: str, file_type: str) -> None:
