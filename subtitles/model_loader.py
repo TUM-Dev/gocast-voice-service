@@ -16,7 +16,7 @@ def download_models(model_dir: str, download_urls: [str]) -> None:
     """
     try:
         os.mkdir(os.path.join(model_dir, '.lock'))
-    except FileExistsError as err:
+    except FileExistsError:
         return  # already downloaded or initiated
 
     try:
