@@ -7,7 +7,7 @@ grpcio-reflection==1.47.0
 grpcio-tools==1.47.0
 idna==3.3
 mccabe==0.7.0
-protobuf==3.20.1
+protobuf==3.20.2
 pycodestyle==2.9.1
 pycparser==2.21
 pyflakes==2.5.0
