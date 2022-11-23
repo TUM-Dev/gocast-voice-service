@@ -55,11 +55,7 @@ $ python -m venv venv
 $ source venv/bin/activate
 (venv) $ pip install --no-cache-dir -r requirements.txt 
 (venv) $ DEBUG=. CONFIG_FILE=./config.yml python3.9 subtitles/subtitles.py
-DEBUG:asyncio:Using selector: KqueueSelector
-DEBUG:grpc._cython.cygrpc:Using AsyncIOEngine.POLLER as I/O engine
-DEBUG:root:loading SubtitleService with models: ['/data/vosk-model-small-en-us-0.15/', '/data/vosk-model-small-de-0.15/']
-DEBUG:root:starting server with reflection activated.
-INFO:root:listening at :50051
+...
 ...
 ```
 
