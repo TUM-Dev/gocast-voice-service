@@ -2,7 +2,7 @@ import sys
 import threading
 import logging
 import os
-from properties import *
+from properties import YAMLPropertiesFile, EnvProperties, PropertyError
 from concurrent import futures
 from grpc_reflection.v1alpha import reflection
 
