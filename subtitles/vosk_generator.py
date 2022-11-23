@@ -1,6 +1,4 @@
 import subprocess
-
-import vosk
 from vosk import Model, KaldiRecognizer, SetLogLevel
 
 SAMPLE_RATE = 16000
@@ -8,7 +6,7 @@ SAMPLE_RATE = 16000
 
 def set_vosk_log_level(debug: bool) -> None:
     if not debug:
-        vosk.SetLogLevel(-1)
+        SetLogLevel(-1)
 
 
 class SubtitleGenerator:

@@ -5,8 +5,9 @@ import os
 from properties import *
 from concurrent import futures
 from grpc_reflection.v1alpha import reflection
-from vosk_generator import SubtitleGenerator, set_vosk_log_level
 
+from model_loader import download_models, ModelLoadError
+from vosk_generator import SubtitleGenerator, set_vosk_log_level
 import grpc
 import subtitles_pb2
 import subtitles_pb2_grpc
@@ -56,7 +57,7 @@ class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
             context.abort(grpc.StatusCode.NOT_FOUND, f'language({language}) not configured')
             return subtitles_pb2.Empty()
 
-        logging.debug(f'starting thread to generate subtitles')
+        logging.debug('starting thread to generate subtitles')
         generator: SubtitleGenerator = self.__generators[language]
         threading.Thread(target=self.__generate, args=(generator, source, stream_id, language)).start()
 
@@ -112,7 +113,10 @@ def main():
     default_properties = {
         'api': {'port': 50055},
         'receiver': {'host': 'localhost', 'port': '50053'},
-        'vosk': {'models': []},
+        'vosk': {
+            'download_urls': [],
+            'models': []
+        },
     }
 
     try:
@@ -121,9 +125,14 @@ def main():
             default=default_properties
         ).get()
         properties = EnvProperties(default=properties).get()
-        print(properties)
-    except PropertyError as error:
-        logging.error(error)
+
+        download_models(properties['vosk']['model_dir'], properties['vosk']['download_urls'])
+
+    except PropertyError as propErr:
+        logging.error(propErr)
+        sys.exit(1)
+    except ModelLoadError as modelLoadErr:
+        logging.error(modelLoadErr)
         sys.exit(1)
 
     set_vosk_log_level(debug)
