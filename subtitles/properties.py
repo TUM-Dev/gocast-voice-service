@@ -80,7 +80,7 @@ class EnvProperties:
 
     def __to_model_obj(self, model: str):
         model_lang_pair = model.split(':')
-        return {'path': model_lang_pair[0], 'lang': model_lang_pair[1]}
+        return {'name': model_lang_pair[0], 'lang': model_lang_pair[1]}
 
 
 def _validate(file_path: str, file_type: str) -> None:

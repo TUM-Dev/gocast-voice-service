@@ -100,7 +100,7 @@ REC_HOST=127.0.0.1
 REC_PORT=51001
 VOSK_MODEL_DIR=/data
 VOSK_DWNLD_URLS=https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip,https://alphacephei.com/vosk/models/vosk-model-small-de-0.15.zip
-VOSK_MODELS=/data/fr:fr,/data/en:en
+VOSK_MODELS=model-fr:fr,model-en:en
 ```
 
 ## License

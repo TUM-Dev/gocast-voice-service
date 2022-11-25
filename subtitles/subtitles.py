@@ -84,11 +84,13 @@ def serve(properties: dict, debug: bool = False) -> None:
         properties (dict): The configuration of the server.
         debug (bool): Whether the server should be started in debug mode or not.
     """
+    models = [{'path': os.path.join(properties['vosk']['model_dir'], m['name']), 'lang': m['lang']}
+              for m in properties['vosk']['models']]
+    receiver = f'{properties["receiver"]["host"]}:{properties["receiver"]["port"]}'
+
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))  # TODO: How to determine how many workers? Guess?
     subtitles_pb2_grpc.add_SubtitleGeneratorServicer_to_server(
-        servicer=SubtitleServerService(
-            models=properties['vosk']['models'],
-            receiver=f'{properties["receiver"]["host"]}:{properties["receiver"]["port"]}'),
+        servicer=SubtitleServerService(models, receiver),
         server=server)
 
     if debug:
@@ -110,30 +112,37 @@ def main():
     debug = os.getenv('DEBUG', '') != ""
     logging.basicConfig(level=(logging.INFO, logging.DEBUG)[debug])
 
-    default_properties = {
+    properties = {
         'api': {'port': 50055},
         'receiver': {'host': 'localhost', 'port': '50053'},
         'vosk': {
+            'model_dir': '/tmp',
             'download_urls': [],
             'models': []
         },
     }
 
     try:
-        properties = YAMLPropertiesFile(
-            path=os.getenv("CONFIG_FILE", './config.yml'),
-            default=default_properties
-        ).get()
+        config_file = os.getenv("CONFIG_FILE")
+        if config_file:
+            if config_file.endswith('.yml'):
+                properties = YAMLPropertiesFile(
+                    path=config_file,
+                    default=properties
+                ).get()
+            else:
+                logging.error('unsupported config file type')
+                sys.exit(1)
+
         properties = EnvProperties(default=properties).get()
 
         download_models(properties['vosk']['model_dir'], properties['vosk']['download_urls'])
-
     except PropertyError as propErr:
         logging.error(propErr)
-        sys.exit(1)
+        sys.exit(2)
     except ModelLoadError as modelLoadErr:
         logging.error(modelLoadErr)
-        sys.exit(1)
+        sys.exit(3)
 
     set_vosk_log_level(debug)
 
