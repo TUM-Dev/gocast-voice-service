@@ -3,6 +3,7 @@ api:
 receiver:
   host: localhost
   port: 50053
+transcriber: 'whisper'
 vosk:
   model_dir: '/data'
   download_urls:
@@ -13,3 +14,5 @@ vosk:
       lang: 'en'
     - name: 'data/vosk-model-small-de-0.15'
       lang: 'de'
+whisper:
+  model: 'tiny'

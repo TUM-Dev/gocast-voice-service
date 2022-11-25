@@ -1,6 +1,6 @@
-import os.path
 from copy import deepcopy
 from dotenv import load_dotenv
+import os.path
 import yaml
 
 
@@ -64,6 +64,8 @@ class EnvProperties:
         properties['receiver']['host'] = os.getenv('REC_HOST', properties['receiver']['host'])
         properties['receiver']['port'] = os.getenv('REC_PORT', properties['receiver']['port'])
 
+        properties['transcriber'] = os.getenv('TRANSCRIBER', properties['transcriber'])
+
         properties['vosk']['model_dir'] = os.getenv('VOSK_MODEL_DIR', properties['vosk']['model_dir'])
 
         # format: https://x.com,https://y.com
@@ -76,7 +78,11 @@ class EnvProperties:
                       for model in os.getenv('VOSK_MODELS').split(',')]
 
             properties['vosk']['models'] = models
+
+        properties['whisper']['model'] = os.getenv('WHISPER_MODEL', properties['whisper']['model'])
+
         return properties
+
 
     def __to_model_obj(self, model: str):
         model_lang_pair = model.split(':')
