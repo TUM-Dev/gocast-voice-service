@@ -2,9 +2,7 @@
 
 Microservice that generates subtitles for [TUM-Live](https://live.rbg.tum.de).
 
-## Usage
-
-### Workflow
+## Workflow
 
 ```
                      ┌──────────┐
@@ -27,7 +25,7 @@ Microservice that generates subtitles for [TUM-Live](https://live.rbg.tum.de).
 └────────────┘                            └───────────┘
 ```
 
-### API
+## API
 
 ```bash
 $ grpcurl -plaintext localhost:50055 list voice.SubtitleGenerator
@@ -44,33 +42,22 @@ $ grpcurl -plaintext \
 
 ## Installation
 
-### Run with virtual environment
+### Python virtual environment
 
 ```bash 
 $ git clone https://github.com/TUM-Dev/TUM-Live-Voice-Service.git
 Cloning into 'TUM-Live-Voice-Service'...
-...
 $ cd TUM-Live-Voice-Service
 $ python -m venv venv
 $ source venv/bin/activate
 (venv) $ pip install --no-cache-dir -r requirements.txt 
 (venv) $ DEBUG=. CONFIG_FILE=./config.yml python3.9 subtitles/subtitles.py
 ...
-...
 ```
 
 Or simply use an open source IDE like [PyCharm CE](https://www.jetbrains.com/pycharm/).
 
 ### Docker
-
-#### build
-
-```bash
-$ docker build --no-cache -t voice-service-image .
-[+] Building 0.4s (1/10)...
-```
-
-#### run application
 
 ```bash
 $ docker run -p 50055:50055 \
@@ -79,20 +66,19 @@ $ docker run -p 50055:50055 \
   -e CONFIG_FILE=./config.yml \
   -e DEBUG=.\
   -d \
-  voice-service-image
+  ghcr.io/tum-dev/tum-live-voice-service:latest
 ```
 
-### Configuration 
+## Configuration 
 
 You can configure the application with: 
 - YAML file 
 - .env file and environment variables
 
-**Configuration precedence** 
+**Configuration precedence** (`>` = _overwrites_): `environment > .env > .yml`
 
-`>` = _overwrites_: `environment > .env > .yml`
-
-#### Examplary .env file 
+<details><summary>Examplary .env file </summary>
+<p>
 
 ```bash
 API_PORT=51000
@@ -103,6 +89,42 @@ VOSK_DWNLD_URLS=https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.
 VOSK_MODELS=model-fr:fr,model-en:en
 WHISPER_MODEL=medium
 ```
+</p>
+</details>
+
+<details><summary>Examplary YAML file </summary>
+<p>
+
+```YAML
+api:
+  port: 50055
+receiver:
+  host: localhost
+  port: 50053
+transcriber: 'whisper'
+vosk:
+  model_dir: '/data'
+  download_urls:
+    - https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip
+    - https://alphacephei.com/vosk/models/vosk-model-small-de-0.15.zip
+  models:
+    - name: 'vosk-model-small-en-us-0.15'
+      lang: 'en'
+    - name: 'data/vosk-model-small-de-0.15'
+      lang: 'de'
+whisper:
+  model: 'tiny'
+```
+</p>
+</details>
+
+## Transcribers
+
+Currently following transcribers are implemented and can be specified in the configuration: 
+  * [whisper](https://github.com/openai/whisper)
+  * [vosk](https://github.com/alphacep/vosk-api)
+  
+Which transcriber one chooses depends immensely on the use case and computing power available. We found that whisper produces much higher quality results, especially regarding punctuation, but is much more compute-heavy.
 
 ## License
 
