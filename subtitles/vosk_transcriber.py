@@ -33,7 +33,7 @@ class VoskTranscriber(Transcriber):
             if language in self.__recognizers:
                 return srt_to_vtt(self.__recognizers[language].SrtResult(stream))
             else:
-                raise VoskTranscriptionError("language not specified in config")
+                raise VoskTranscriptionError(f'Unsupported language: {language}')
 
 
 def set_vosk_log_level(debug: bool) -> None:
