@@ -22,7 +22,7 @@ class VoskTranscriber(Transcriber):
             model['lang']: new_recognizer(model['path'])
             for model in models}
 
-    def generate(self, source: str, language: str) -> str:
+    def generate(self, source: str, language: str) -> (str, str):
         with subprocess.Popen(['ffmpeg',
                                '-loglevel', 'quiet',
                                '-i', source,
@@ -31,7 +31,7 @@ class VoskTranscriber(Transcriber):
                                '-f', 'wav', "-"],
                               stdout=subprocess.PIPE).stdout as stream:
             if language in self.__recognizers:
-                return srt_to_vtt(self.__recognizers[language].SrtResult(stream))
+                return srt_to_vtt(self.__recognizers[language].SrtResult(stream)), language
             else:
                 raise VoskTranscriptionError(f'Unsupported language: {language}')
 

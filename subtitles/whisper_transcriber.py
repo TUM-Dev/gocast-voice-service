@@ -15,10 +15,11 @@ class WhisperTranscriber(Transcriber):
         super().__init__()
         self.__model = whisper.load_model(model)
 
-    def generate(self, source: str, language: str = None) -> str:
+    def generate(self, source: str, language: str = None) -> (str, str):
         options = whisper.DecodingOptions(language=language)
         result = self.__model.transcribe(source, **options.__dict__, verbose=False)
-        return _whisper_to_vtt(result['segments'])
+        language = result['language']
+        return _whisper_to_vtt(result['segments']), language
 
 
 def _whisper_to_vtt(segments) -> str:

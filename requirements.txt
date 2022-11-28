@@ -44,7 +44,7 @@ regex==2022.9.13
 requests==2.28.1
 sacrebleu==2.3.1
 sacremoses==0.0.53
-scipy==1.7.1
+scipy==1.9.3
 six==1.16.0
 soupsieve==2.3.2.post1
 SpeechRecognition==3.8.1
