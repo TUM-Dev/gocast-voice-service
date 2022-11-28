@@ -1,6 +1,8 @@
 from transcriber import Transcriber
 import whisper
 
+SRT_TIMESTAMP_FORMAT = "%02d:%02d:%06.3f"
+
 
 class WhisperTranscriber(Transcriber):
     def __init__(self, model: str) -> None:
@@ -16,4 +18,40 @@ class WhisperTranscriber(Transcriber):
     def generate(self, source: str, language: str = None) -> str:
         options = whisper.DecodingOptions(language=language)
         result = self.__model.transcribe(source, **options.__dict__, verbose=False)
-        return result
+        return _whisper_to_vtt(result['segments'])
+
+
+def _whisper_to_vtt(segments) -> str:
+    """Return WebVTT subtitle string"""
+    vtt = ['WEBVTT\n']
+
+    for i, s in enumerate(segments):
+        time_start, time_end = s['start'], s['end']
+        timestamp_start = SRT_TIMESTAMP_FORMAT % _get_hms(time_start)
+        timestamp_end = SRT_TIMESTAMP_FORMAT % _get_hms(time_end)
+
+        vtt.append(f'{i + 1}')
+        vtt.append(f'{timestamp_start} --> {timestamp_end}')
+        vtt.append(s['text'].strip() + "\n")
+
+    return '\n'.join(vtt)
+
+
+def _whisper_to_srt(segments) -> str:
+    """Return SRT subtitle string"""
+    srt = []
+
+    for i, s in enumerate(segments):
+        time_start, time_end = s['start'], s['end']
+        timestamp_start = (SRT_TIMESTAMP_FORMAT % _get_hms(time_start)).replace('.', ',')
+        timestamp_end = (SRT_TIMESTAMP_FORMAT % _get_hms(time_end)).replace('.', ',')
+
+        srt.append(f'{i + 1}')
+        srt.append(f'{timestamp_start} --> {timestamp_end}')
+        srt.append(s['text'].strip() + "\n")
+
+    return '\n'.join(srt)
+
+
+def _get_hms(time: float) -> (float, float, float):
+    return int(time / 3600), (time / 60) % 60, time % 60

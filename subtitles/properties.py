@@ -43,11 +43,7 @@ class EnvProperties:
     """Config which can be loaded with environment variables file"""
 
     def __init__(self, default=None) -> None:
-        """Initialize Config with a given YAML file.
-
-        Args:
-            path (str): The path to a YAML file.
-        """
+        """Initialize Config with a given .env file."""
         if default is None:
             default = {}
         self._default = default
@@ -57,7 +53,7 @@ class EnvProperties:
         """Reads the properties file, overwrites defaults, and returns a dictionary.
 
         Returns:
-            Dictionary (dict) containing the properties.
+            Dictionary containing the properties.
         """
         properties = deepcopy(self._default)
         properties['api']['port'] = os.getenv('API_PORT', properties['api']['port'])
@@ -82,7 +78,6 @@ class EnvProperties:
         properties['whisper']['model'] = os.getenv('WHISPER_MODEL', properties['whisper']['model'])
 
         return properties
-
 
     def __to_model_obj(self, model: str):
         model_lang_pair = model.split(':')

@@ -1,11 +1,6 @@
 from abc import ABC, abstractmethod
 
 
-class TranscriberFactory(ABC):
-    def make(self):
-        pass
-
-
 class Transcriber(ABC):
     @abstractmethod
     def generate(self, source: str, language: str) -> str:
