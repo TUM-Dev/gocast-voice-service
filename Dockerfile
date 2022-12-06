@@ -9,6 +9,9 @@ ADD config.yml .
 # Vosk Dependencies
 RUN apt-get update -y && apt-get install -y ffmpeg
 
+# Whisper Dependencies
+RUN apt-get install -y git
+
 
 # Install Python modules
 RUN pip install --no-cache-dir -r requirements.txt
