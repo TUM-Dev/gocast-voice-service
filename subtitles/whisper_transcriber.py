@@ -16,8 +16,12 @@ class WhisperTranscriber(Transcriber):
         self.__model = whisper.load_model(model)
 
     def generate(self, source: str, language: str = None) -> (str, str):
-        options = whisper.DecodingOptions(language=language)
-        result = self.__model.transcribe(source, **options.__dict__, verbose=False)
+        # solve silence issue. see: https://github.com/openai/whisper/discussions/29
+        options = whisper.DecodingOptions(language=language).__dict__.copy()
+        options['no_speech_threshold'] = 0.2
+        options['logprob_threshold'] = None
+
+        result = self.__model.transcribe(source, **options, verbose=False)
         language = result['language']
         return _whisper_to_vtt(result['segments']), language
 
