@@ -108,6 +108,7 @@ def get_transcriber(properties: dict) -> Transcriber:
     if prop == 'whisper':
         return WhisperTranscriber(properties['whisper']['model'])
     if prop == 'vosk':
+        download_models(properties['vosk']['model_dir'], properties['vosk']['download_urls'])
         models = [{'path': os.path.join(properties['vosk']['model_dir'], m['name']), 'lang': m['lang']}
                   for m in properties['vosk']['models']]
         return VoskTranscriber(models)
@@ -142,8 +143,6 @@ def main():
                 sys.exit(1)
 
         properties = EnvProperties(default=properties).get()
-
-        download_models(properties['vosk']['model_dir'], properties['vosk']['download_urls'])
     except PropertyError as propErr:
         logging.error(propErr)
         sys.exit(2)
