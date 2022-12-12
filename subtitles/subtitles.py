@@ -5,6 +5,7 @@ import os
 from properties import YAMLPropertiesFile, EnvProperties, PropertyError
 from concurrent import futures
 from grpc_reflection.v1alpha import reflection
+from grpc._channel import _InactiveRpcError
 
 from model_loader import download_models, ModelLoadError
 import grpc
@@ -68,8 +69,10 @@ class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
             try:
                 stub.Receive(request)
                 logging.info('subtitle-request sent')
-            except Exception as e:
-                logging.error(e)
+            except _InactiveRpcError as grpc_err:
+                logging.error(grpc_err.details())
+            except Exception as err:
+                logging.error(err)
 
 
 def serve(properties: dict, debug: bool = False) -> None:
