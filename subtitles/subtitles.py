@@ -56,7 +56,7 @@ class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
 
     def __generate(self, transcriber: VoskTranscriber, source: str, stream_id: str, language: str) -> None:
         subtitles, language = transcriber.generate(source, language)
-        print(subtitles)
+
         logging.info(f'trying to connect to receiver @ {self.__receiver}')
         with grpc.insecure_channel(self.__receiver) as channel:
             stub = subtitles_pb2_grpc.SubtitleReceiverStub(channel)
