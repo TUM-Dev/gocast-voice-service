@@ -18,7 +18,7 @@ class WhisperTranscriber(Transcriber):
     def generate(self, source: str, language: str = None) -> (str, str):
         # solve silence issue. see: https://github.com/openai/whisper/discussions/29
         options = whisper.DecodingOptions(language=language).__dict__.copy()
-        options['no_speech_threshold'] = 0.2
+        options['no_speech_threshold'] = 0.275
         options['logprob_threshold'] = None
 
         result = self.__model.transcribe(source, **options, verbose=False)
