@@ -1,6 +1,6 @@
-import os.path
 from copy import deepcopy
 from dotenv import load_dotenv
+import os.path
 import yaml
 
 
@@ -43,11 +43,7 @@ class EnvProperties:
     """Config which can be loaded with environment variables file"""
 
     def __init__(self, default=None) -> None:
-        """Initialize Config with a given YAML file.
-
-        Args:
-            path (str): The path to a YAML file.
-        """
+        """Initialize Config with a given .env file."""
         if default is None:
             default = {}
         self._default = default
@@ -57,12 +53,14 @@ class EnvProperties:
         """Reads the properties file, overwrites defaults, and returns a dictionary.
 
         Returns:
-            Dictionary (dict) containing the properties.
+            Dictionary containing the properties.
         """
         properties = deepcopy(self._default)
         properties['api']['port'] = os.getenv('API_PORT', properties['api']['port'])
         properties['receiver']['host'] = os.getenv('REC_HOST', properties['receiver']['host'])
         properties['receiver']['port'] = os.getenv('REC_PORT', properties['receiver']['port'])
+
+        properties['transcriber'] = os.getenv('TRANSCRIBER', properties['transcriber'])
 
         properties['vosk']['model_dir'] = os.getenv('VOSK_MODEL_DIR', properties['vosk']['model_dir'])
 
@@ -76,11 +74,14 @@ class EnvProperties:
                       for model in os.getenv('VOSK_MODELS').split(',')]
 
             properties['vosk']['models'] = models
+
+        properties['whisper']['model'] = os.getenv('WHISPER_MODEL', properties['whisper']['model'])
+
         return properties
 
     def __to_model_obj(self, model: str):
         model_lang_pair = model.split(':')
-        return {'path': model_lang_pair[0], 'lang': model_lang_pair[1]}
+        return {'name': model_lang_pair[0], 'lang': model_lang_pair[1]}
 
 
 def _validate(file_path: str, file_type: str) -> None:
