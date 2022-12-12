@@ -2,11 +2,9 @@ FROM python:3.9-slim as builder
 
 ADD requirements.txt .
 
-# Whisper Dependencies
-RUN apt-get update && apt-get install -y git
-
-# Install Python modules
-RUN pip install --user --no-cache-dir -r requirements.txt
+# Dependencys
+RUN apt-get update && apt-get install -y git &&\
+         pip install --user --no-cache-dir -r requirements.txt 
 
 FROM python:3.9-slim
 
