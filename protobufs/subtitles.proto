@@ -1,5 +1,5 @@
 syntax = "proto3";
-package voice;
+package live.voice.v1;
 
 // Implemented in voice-service
 service SubtitleGenerator {

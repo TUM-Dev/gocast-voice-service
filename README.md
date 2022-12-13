@@ -28,7 +28,7 @@ Microservice that generates subtitles for [TUM-Live](https://live.rbg.tum.de).
 ## API
 
 ```bash
-$ grpcurl -plaintext localhost:50055 list voice.SubtitleGenerator
+$ grpcurl -plaintext localhost:50055 list live.voice.v1.SubtitleGenerator
 
 voice.SubtitleGenerator.Generate
 ```
@@ -37,7 +37,7 @@ voice.SubtitleGenerator.Generate
 $ grpcurl -plaintext \
   -d '{"stream_id":1, "source_file":"/tmp/120.mp4"}' \
   -import-path ./protobufs -proto subtitles.proto \
-  localhost:50055 voice.SubtitleGenerator.Generate
+  localhost:50055 live.voice.v1.SubtitleGenerator.Generate
 ```
 
 ## Installation

@@ -16,7 +16,7 @@ class SubtitleGeneratorStub(object):
             channel: A grpc.Channel.
         """
         self.Generate = channel.unary_unary(
-                '/voice.SubtitleGenerator/Generate',
+                '/live.voice.v1.SubtitleGenerator/Generate',
                 request_serializer=subtitles__pb2.GenerateRequest.SerializeToString,
                 response_deserializer=subtitles__pb2.Empty.FromString,
                 )
@@ -42,7 +42,7 @@ def add_SubtitleGeneratorServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'voice.SubtitleGenerator', rpc_method_handlers)
+            'live.voice.v1.SubtitleGenerator', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
@@ -62,7 +62,7 @@ class SubtitleGenerator(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/voice.SubtitleGenerator/Generate',
+        return grpc.experimental.unary_unary(request, target, '/live.voice.v1.SubtitleGenerator/Generate',
             subtitles__pb2.GenerateRequest.SerializeToString,
             subtitles__pb2.Empty.FromString,
             options, channel_credentials,
@@ -80,7 +80,7 @@ class SubtitleReceiverStub(object):
             channel: A grpc.Channel.
         """
         self.Receive = channel.unary_unary(
-                '/voice.SubtitleReceiver/Receive',
+                '/live.voice.v1.SubtitleReceiver/Receive',
                 request_serializer=subtitles__pb2.ReceiveRequest.SerializeToString,
                 response_deserializer=subtitles__pb2.Empty.FromString,
                 )
@@ -106,7 +106,7 @@ def add_SubtitleReceiverServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'voice.SubtitleReceiver', rpc_method_handlers)
+            'live.voice.v1.SubtitleReceiver', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
@@ -126,7 +126,7 @@ class SubtitleReceiver(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/voice.SubtitleReceiver/Receive',
+        return grpc.experimental.unary_unary(request, target, '/live.voice.v1.SubtitleReceiver/Receive',
             subtitles__pb2.ReceiveRequest.SerializeToString,
             subtitles__pb2.Empty.FromString,
             options, channel_credentials,
