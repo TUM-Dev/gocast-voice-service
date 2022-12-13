@@ -2,7 +2,7 @@ FROM python:3.9-slim as builder
 
 ADD requirements.txt .
 
-# Dependencys
+# Dependencies
 RUN apt-get update && apt-get install -y git &&\
          pip install --user --no-cache-dir -r requirements.txt 
 
