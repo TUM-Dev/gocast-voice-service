@@ -2,6 +2,8 @@ import sys
 import threading
 import logging
 import os
+from signal import signal, SIGTERM, SIGINT, SIGQUIT
+
 from properties import YAMLPropertiesFile, EnvProperties, PropertyError
 from concurrent import futures
 from grpc_reflection.v1alpha import reflection
@@ -103,6 +105,16 @@ def serve(properties: dict, debug: bool = False) -> None:
     logging.info(f'listening at :{port}')
     server.add_insecure_port(f'[::]:{port}')
     server.start()
+
+    def handle_shutdown(*_):
+        logging.info('received shutdown signal')
+        all_requests_done = server.stop(30)
+        all_requests_done.wait(30)
+        logging.info('shut down gracefully')
+
+    signal(SIGTERM, handle_shutdown)
+    signal(SIGINT, handle_shutdown)
+    signal(SIGQUIT, handle_shutdown)
     server.wait_for_termination()
 
 
