@@ -1,11 +1,10 @@
 import sys
-import threading
 import logging
 import os
-from signal import signal, SIGTERM, SIGINT, SIGQUIT
+from signal import signal, SIGTERM, SIGINT, SIGQUIT, strsignal
 
+from concurrent.futures import ThreadPoolExecutor
 from properties import YAMLPropertiesFile, EnvProperties, PropertyError
-from concurrent import futures
 from grpc_reflection.v1alpha import reflection
 from grpc._channel import _InactiveRpcError
 
@@ -21,15 +20,17 @@ from transcriber import Transcriber
 class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
     """grpc service for subtitles"""
 
-    def __init__(self, transcriber: Transcriber, receiver: str) -> None:
+    def __init__(self, transcriber: Transcriber, receiver: str, executor: ThreadPoolExecutor) -> None:
         """Initialize service.
 
         Args:
             transcriber: The transcriber used for subtitle generation.
             receiver: The address of the receiver service.
+            executor: Threadpool for running generation jobs
         """
         self.__transcriber = transcriber
         self.__receiver = receiver
+        self.__executor = executor
 
     def Generate(self, req: subtitles_pb2.GenerateRequest,
                  context: grpc.ServicerContext) -> subtitles_pb2.Empty:
@@ -53,7 +54,7 @@ class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
             return subtitles_pb2.Empty()
 
         logging.debug('starting thread to generate subtitles')
-        threading.Thread(target=self.__generate, args=(self.__transcriber, source, stream_id, language)).start()
+        self.__executor.submit(self.__generate, self.__transcriber, source, stream_id, language)
 
         return subtitles_pb2.Empty()
 
@@ -87,35 +88,37 @@ def serve(properties: dict, debug: bool = False) -> None:
     transcriber = get_transcriber(properties)
     receiver = f'{properties["receiver"]["host"]}:{properties["receiver"]["port"]}'
 
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))  # TODO: How to determine how many workers? Guess?
-    subtitles_pb2_grpc.add_SubtitleGeneratorServicer_to_server(
-        servicer=SubtitleServerService(transcriber, receiver),
-        server=server)
+    with ThreadPoolExecutor(max_workers=10) as executor:  # TODO: How to determine how many workers? Guess?
+        server = grpc.server(executor)
+        subtitles_pb2_grpc.add_SubtitleGeneratorServicer_to_server(
+            servicer=SubtitleServerService(transcriber, receiver, executor),
+            server=server)
 
-    if debug:
-        logging.debug(properties)
-        logging.debug('starting server with reflection activated.')
-        service_names = (
-            subtitles_pb2.DESCRIPTOR.services_by_name['SubtitleGenerator'].full_name,
-            reflection.SERVICE_NAME,
-        )
-        reflection.enable_server_reflection(service_names, server)
+        if debug:
+            logging.debug(properties)
+            logging.debug('starting server with reflection activated.')
+            service_names = (
+                subtitles_pb2.DESCRIPTOR.services_by_name['SubtitleGenerator'].full_name,
+                reflection.SERVICE_NAME,
+            )
+            reflection.enable_server_reflection(service_names, server)
 
-    port = properties['api']['port']
-    logging.info(f'listening at :{port}')
-    server.add_insecure_port(f'[::]:{port}')
-    server.start()
+        port = properties['api']['port']
+        logging.info(f'listening at :{port}')
+        server.add_insecure_port(f'[::]:{port}')
+        server.start()
 
-    def handle_shutdown(*_):
-        logging.info('received shutdown signal')
-        all_requests_done = server.stop(30)
-        all_requests_done.wait(30)
-        logging.info('shut down gracefully')
+        def handle_shutdown(signum, *_):
+            logging.info(f'received "{strsignal(signum)}" signal')
+            all_requests_done = server.stop(30)
+            all_requests_done.wait(30)
+            executor.shutdown(wait=True)
+            logging.info('shut down gracefully')
 
-    signal(SIGTERM, handle_shutdown)
-    signal(SIGINT, handle_shutdown)
-    signal(SIGQUIT, handle_shutdown)
-    server.wait_for_termination()
+        signal(SIGTERM, handle_shutdown)
+        signal(SIGINT, handle_shutdown)
+        signal(SIGQUIT, handle_shutdown)
+        server.wait_for_termination()
 
 
 def get_transcriber(properties: dict) -> Transcriber:
