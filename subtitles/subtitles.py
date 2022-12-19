@@ -4,9 +4,14 @@ import os
 from signal import signal, SIGTERM, SIGINT, SIGQUIT, strsignal
 
 from concurrent.futures import ThreadPoolExecutor
+
+import google
+
 from properties import YAMLPropertiesFile, EnvProperties, PropertyError
 from grpc_reflection.v1alpha import reflection
 from grpc._channel import _InactiveRpcError
+
+from google.protobuf import empty_pb2
 
 from model_loader import download_models, ModelLoadError
 import grpc
@@ -33,7 +38,7 @@ class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
         self.__executor = executor
 
     def Generate(self, req: subtitles_pb2.GenerateRequest,
-                 context: grpc.ServicerContext) -> subtitles_pb2.Empty:
+                 context: grpc.ServicerContext) -> empty_pb2.Empty:
         """ Handler function for an incoming Generate request.
 
         Args:
@@ -51,12 +56,11 @@ class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
         logging.debug(f'checking if {source} exists')
         if not os.path.isfile(source):
             context.abort(grpc.StatusCode.NOT_FOUND, f'can not find source file: {source}')
-            return subtitles_pb2.Empty()
+            return empty_pb2.Empty()
 
         logging.debug('starting thread to generate subtitles')
         self.__executor.submit(self.__generate, self.__transcriber, source, stream_id, language)
-
-        return subtitles_pb2.Empty()
+        return empty_pb2.Empty()
 
     def __generate(self, transcriber: VoskTranscriber, source: str, stream_id: str, language: str) -> None:
         subtitles, language = transcriber.generate(source, language)

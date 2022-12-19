@@ -11,23 +11,22 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
+from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0fsubtitles.proto\x12\rlive.voice.v1\"H\n\x0eReceiveRequest\x12\x11\n\tstream_id\x18\x01 \x01(\x05\x12\x11\n\tsubtitles\x18\x02 \x01(\t\x12\x10\n\x08language\x18\x03 \x01(\t\"K\n\x0fGenerateRequest\x12\x11\n\tstream_id\x18\x01 \x01(\x05\x12\x13\n\x0bsource_file\x18\x02 \x01(\t\x12\x10\n\x08language\x18\x03 \x01(\t\"\x07\n\x05\x45mpty2W\n\x11SubtitleGenerator\x12\x42\n\x08Generate\x12\x1e.live.voice.v1.GenerateRequest\x1a\x14.live.voice.v1.Empty\"\x00\x32T\n\x10SubtitleReceiver\x12@\n\x07Receive\x12\x1d.live.voice.v1.ReceiveRequest\x1a\x14.live.voice.v1.Empty\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0fsubtitles.proto\x12\rlive.voice.v1\x1a\x1bgoogle/protobuf/empty.proto\"H\n\x0eReceiveRequest\x12\x11\n\tstream_id\x18\x01 \x01(\x05\x12\x11\n\tsubtitles\x18\x02 \x01(\t\x12\x10\n\x08language\x18\x03 \x01(\t\"K\n\x0fGenerateRequest\x12\x11\n\tstream_id\x18\x01 \x01(\x05\x12\x13\n\x0bsource_file\x18\x02 \x01(\t\x12\x10\n\x08language\x18\x03 \x01(\t2Y\n\x11SubtitleGenerator\x12\x44\n\x08Generate\x12\x1e.live.voice.v1.GenerateRequest\x1a\x16.google.protobuf.Empty\"\x00\x32V\n\x10SubtitleReceiver\x12\x42\n\x07Receive\x12\x1d.live.voice.v1.ReceiveRequest\x1a\x16.google.protobuf.Empty\"\x00\x62\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'subtitles_pb2', globals())
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
-  _RECEIVEREQUEST._serialized_start=34
-  _RECEIVEREQUEST._serialized_end=106
-  _GENERATEREQUEST._serialized_start=108
-  _GENERATEREQUEST._serialized_end=183
-  _EMPTY._serialized_start=185
-  _EMPTY._serialized_end=192
-  _SUBTITLEGENERATOR._serialized_start=194
-  _SUBTITLEGENERATOR._serialized_end=281
-  _SUBTITLERECEIVER._serialized_start=283
-  _SUBTITLERECEIVER._serialized_end=367
+  _RECEIVEREQUEST._serialized_start=63
+  _RECEIVEREQUEST._serialized_end=135
+  _GENERATEREQUEST._serialized_start=137
+  _GENERATEREQUEST._serialized_end=212
+  _SUBTITLEGENERATOR._serialized_start=214
+  _SUBTITLEGENERATOR._serialized_end=303
+  _SUBTITLERECEIVER._serialized_start=305
+  _SUBTITLERECEIVER._serialized_end=391
 # @@protoc_insertion_point(module_scope)
