@@ -42,21 +42,5 @@ def _whisper_to_vtt(segments) -> str:
     return '\n'.join(vtt)
 
 
-def _whisper_to_srt(segments) -> str:
-    """Return SRT subtitle string"""
-    srt = []
-
-    for i, s in enumerate(segments):
-        time_start, time_end = s['start'], s['end']
-        timestamp_start = (SRT_TIMESTAMP_FORMAT % _get_hms(time_start)).replace('.', ',')
-        timestamp_end = (SRT_TIMESTAMP_FORMAT % _get_hms(time_end)).replace('.', ',')
-
-        srt.append(f'{i + 1}')
-        srt.append(f'{timestamp_start} --> {timestamp_end}')
-        srt.append(s['text'].strip() + "\n")
-
-    return '\n'.join(srt)
-
-
 def _get_hms(time: float) -> (float, float, float):
     return int(time / 3600), (time / 60) % 60, time % 60

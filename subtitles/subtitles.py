@@ -26,7 +26,7 @@ class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
         Args:
             transcriber: The transcriber used for subtitle generation.
             receiver: The address of the receiver service.
-            executor: Threadpool for running generation jobs
+            executor: Threadpool for jobs.
         """
         self.__transcriber = transcriber
         self.__receiver = receiver
@@ -87,6 +87,7 @@ def serve(properties: dict, debug: bool = False) -> None:
     """
     transcriber = get_transcriber(properties)
     receiver = f'{properties["receiver"]["host"]}:{properties["receiver"]["port"]}'
+    port = properties['api']['port']
 
     with ThreadPoolExecutor(max_workers=10) as executor:  # TODO: How to determine how many workers? Guess?
         server = grpc.server(executor)
@@ -96,14 +97,8 @@ def serve(properties: dict, debug: bool = False) -> None:
 
         if debug:
             logging.debug(properties)
-            logging.debug('starting server with reflection activated.')
-            service_names = (
-                subtitles_pb2.DESCRIPTOR.services_by_name['SubtitleGenerator'].full_name,
-                reflection.SERVICE_NAME,
-            )
-            reflection.enable_server_reflection(service_names, server)
+            activate_reflection(server)
 
-        port = properties['api']['port']
         logging.info(f'listening at :{port}')
         server.add_insecure_port(f'[::]:{port}')
         server.start()
@@ -130,6 +125,15 @@ def get_transcriber(properties: dict) -> Transcriber:
         models = [{'path': os.path.join(properties['vosk']['model_dir'], m['name']), 'lang': m['lang']}
                   for m in properties['vosk']['models']]
         return VoskTranscriber(models)
+
+
+def activate_reflection(server: grpc.Server) -> None:
+    logging.debug('starting server with reflection activated.')
+    service_names = (
+        subtitles_pb2.DESCRIPTOR.services_by_name['SubtitleGenerator'].full_name,
+        reflection.SERVICE_NAME,
+    )
+    reflection.enable_server_reflection(service_names, server)
 
 
 def main():
