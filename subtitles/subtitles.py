@@ -2,17 +2,11 @@ import sys
 import logging
 import os
 from signal import signal, SIGTERM, SIGINT, SIGQUIT, strsignal
-
 from concurrent.futures import ThreadPoolExecutor
-
-import google
-
 from properties import YAMLPropertiesFile, EnvProperties, PropertyError
 from grpc_reflection.v1alpha import reflection
 from grpc._channel import _InactiveRpcError
-
 from google.protobuf import empty_pb2
-
 from model_loader import download_models, ModelLoadError
 import grpc
 import subtitles_pb2
@@ -93,7 +87,7 @@ def serve(properties: dict, debug: bool = False) -> None:
     receiver = f'{properties["receiver"]["host"]}:{properties["receiver"]["port"]}'
     port = properties['api']['port']
 
-    with ThreadPoolExecutor(max_workers=10) as executor:  # TODO: How to determine how many workers? Guess?
+    with ThreadPoolExecutor(max_workers=None) as executor:
         server = grpc.server(executor)
         subtitles_pb2_grpc.add_SubtitleGeneratorServicer_to_server(
             servicer=SubtitleServerService(transcriber, receiver, executor),
