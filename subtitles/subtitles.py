@@ -11,7 +11,7 @@ from model_loader import download_models, ModelLoadError
 import grpc
 import subtitles_pb2
 import subtitles_pb2_grpc
-from vosk_transcriber import VoskTranscriber
+from vosk_transcriber import VoskTranscriber, set_vosk_log_level
 from whisper_transcriber import WhisperTranscriber
 from transcriber import Transcriber
 
@@ -56,7 +56,7 @@ class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
         self.__executor.submit(self.__generate, self.__transcriber, source, stream_id, language)
         return empty_pb2.Empty()
 
-    def __generate(self, transcriber: VoskTranscriber, source: str, stream_id: str, language: str) -> None:
+    def __generate(self, transcriber: Transcriber, source: str, stream_id: str, language: str) -> None:
         subtitles, language = transcriber.generate(source, language)
 
         logging.info(f'trying to connect to receiver @ {self.__receiver}')
@@ -137,6 +137,7 @@ def activate_reflection(server: grpc.Server) -> None:
 def main():
     debug = os.getenv('DEBUG', '') != ""
     logging.basicConfig(level=(logging.INFO, logging.DEBUG)[debug])
+    set_vosk_log_level(debug)
 
     properties = {
         'api': {'port': 50055},

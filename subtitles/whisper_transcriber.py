@@ -1,5 +1,8 @@
 from transcriber import Transcriber
+from threading import Lock
 import whisper
+
+mutex_whisper = Lock()
 
 SRT_TIMESTAMP_FORMAT = "%02d:%02d:%06.3f"
 
@@ -21,9 +24,13 @@ class WhisperTranscriber(Transcriber):
         options['no_speech_threshold'] = 0.275
         options['logprob_threshold'] = None
 
-        result = self.__model.transcribe(source, **options, verbose=False)
-        language = result['language']
-        return _whisper_to_vtt(result['segments']), language
+        try:
+            mutex_whisper.acquire()
+            result = self.__model.transcribe(source, **options, verbose=False)
+            language = result['language']
+            return _whisper_to_vtt(result['segments']), language
+        finally:
+            mutex_whisper.release()
 
 
 def _whisper_to_vtt(segments) -> str:

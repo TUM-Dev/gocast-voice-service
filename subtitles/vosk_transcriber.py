@@ -1,6 +1,11 @@
 import subprocess
+
+import vosk
 from vosk import Model, KaldiRecognizer, SetLogLevel
 from transcriber import Transcriber
+from threading import Lock
+
+mutex_vosk = Lock()
 
 
 class VoskTranscriptionError(Exception):
@@ -31,7 +36,12 @@ class VoskTranscriber(Transcriber):
                                '-f', 'wav', "-"],
                               stdout=subprocess.PIPE).stdout as stream:
             if language in self.__recognizers:
-                return srt_to_vtt(self.__recognizers[language].SrtResult(stream)), language
+                mutex_vosk.acquire()
+                try:
+                    return self.__recognizers[language].SrtResult(stream), language
+                finally:
+                    mutex_vosk.release()
+
             else:
                 raise VoskTranscriptionError(f'Unsupported language: {language}')
 
@@ -41,7 +51,7 @@ def set_vosk_log_level(debug: bool) -> None:
         SetLogLevel(-1)
 
 
-def new_recognizer(path: str):
+def new_recognizer(path: str) -> vosk.KaldiRecognizer:
     r = KaldiRecognizer(Model(model_path=path), VoskTranscriber.SAMPLE_RATE)
     r.SetWords(True)
     return r
