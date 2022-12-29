@@ -27,10 +27,10 @@ class WhisperTranscriber(Transcriber):
         try:
             mutex_whisper.acquire()
             result = self.__model.transcribe(source, **options, verbose=False)
-            language = result['language']
-            return _whisper_to_vtt(result['segments']), language
         finally:
             mutex_whisper.release()
+        language = result['language']
+        return _whisper_to_vtt(result['segments']), language
 
 
 def _whisper_to_vtt(segments) -> str:
