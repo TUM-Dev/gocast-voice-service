@@ -11,15 +11,20 @@ class VoskTranscriptionError(Exception):
 class VoskTranscriber(Transcriber):
     SAMPLE_RATE = 16000
 
-    def __init__(self, models: [object]) -> None:
+    def __init__(self, models: [object], debug: bool) -> None:
         """Initialize VoskTranscriber with an array of given models.
 
         Args:
             models: Array of (language, model) tuples
                 Visit https://alphacephei.com/vosk/models for a list of available models.
+            debug: Display debug information or not.
         """
         super().__init__()
+
         self.__models = {model['lang']: model['path'] for model in models}
+
+        if not debug:
+            SetLogLevel(-1)
 
     def generate(self, source: str, language: str) -> (str, str):
         with subprocess.Popen(['ffmpeg',
@@ -35,11 +40,6 @@ class VoskTranscriber(Transcriber):
 
             else:
                 raise VoskTranscriptionError(f'Unsupported language: {language}')
-
-
-def set_vosk_log_level(debug: bool) -> None:
-    if not debug:
-        SetLogLevel(-1)
 
 
 def new_recognizer(path: str) -> vosk.KaldiRecognizer:

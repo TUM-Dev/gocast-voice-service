@@ -11,7 +11,7 @@ from model_loader import download_models, ModelLoadError
 import grpc
 import subtitles_pb2
 import subtitles_pb2_grpc
-from vosk_transcriber import VoskTranscriber, set_vosk_log_level
+from vosk_transcriber import VoskTranscriber
 from whisper_transcriber import WhisperTranscriber
 from transcriber import Transcriber
 
@@ -83,7 +83,7 @@ def serve(properties: dict, debug: bool = False) -> None:
         properties: The configuration of the server.
         debug: Whether the server should be started in debug mode or not.
     """
-    transcriber = get_transcriber(properties)
+    transcriber = get_transcriber(properties, debug)
     receiver = f'{properties["receiver"]["host"]}:{properties["receiver"]["port"]}'
     port = properties['api']['port']
 
@@ -114,15 +114,15 @@ def serve(properties: dict, debug: bool = False) -> None:
         server.wait_for_termination()
 
 
-def get_transcriber(properties: dict) -> Transcriber:
+def get_transcriber(properties: dict, debug: bool) -> Transcriber:
     prop = properties['transcriber']
     if prop == 'whisper':
-        return WhisperTranscriber(properties['whisper']['model'])
+        return WhisperTranscriber(properties['whisper']['model'], debug)
     if prop == 'vosk':
         download_models(properties['vosk']['model_dir'], properties['vosk']['download_urls'])
         models = [{'path': os.path.join(properties['vosk']['model_dir'], m['name']), 'lang': m['lang']}
                   for m in properties['vosk']['models']]
-        return VoskTranscriber(models)
+        return VoskTranscriber(models, debug)
 
 
 def activate_reflection(server: grpc.Server) -> None:
@@ -137,7 +137,6 @@ def activate_reflection(server: grpc.Server) -> None:
 def main():
     debug = os.getenv('DEBUG', '') != ""
     logging.basicConfig(level=(logging.INFO, logging.DEBUG)[debug])
-    set_vosk_log_level(debug)
 
     properties = {
         'api': {'port': 50055},

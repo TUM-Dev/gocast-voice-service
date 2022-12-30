@@ -1,35 +1,34 @@
 from transcriber import Transcriber
-from threading import Lock
 import whisper
-
-mutex_whisper = Lock()
 
 SRT_TIMESTAMP_FORMAT = "%02d:%02d:%06.3f"
 
 
 class WhisperTranscriber(Transcriber):
-    def __init__(self, model: str) -> None:
+    def __init__(self, model: str, debug: bool) -> None:
         """Initialize WhisperTranscriber with an array of given models.
 
         Args:
             model: The model type.
                 Visit https://github.com/openai/whisper for a list of available models.
+            debug: Display debug information or not.
         """
         super().__init__()
-        self.__model = whisper.load_model(model)
+        self.__model = model
+        self.__verbose = (None, True)[debug]
 
     def generate(self, source: str, language: str = None) -> (str, str):
-        # solve silence issue. see: https://github.com/openai/whisper/discussions/29
-        options = whisper.DecodingOptions(language=language).__dict__.copy()
-        options['no_speech_threshold'] = 0.275
-        options['logprob_threshold'] = None
+        options = whisper.DecodingOptions(language=language)
+        transcriber = whisper.load_model(self.__model)
 
-        try:
-            mutex_whisper.acquire()
-            result = self.__model.transcribe(source, **options, verbose=False)
-        finally:
-            mutex_whisper.release()
+        # solve silence issue. see: https://github.com/openai/whisper/discussions/29
+        result = transcriber.transcribe(source,
+                                        **options.__dict__,
+                                        logprob_threshold=None,
+                                        no_speech_threshold=0.275,
+                                        verbose=self.__verbose)
         language = result['language']
+
         return _whisper_to_vtt(result['segments']), language
 
 
