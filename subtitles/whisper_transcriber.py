@@ -1,7 +1,7 @@
 from transcriber import Transcriber
 import whisper
 
-SRT_TIMESTAMP_FORMAT = "%02d:%02d:%06.3f"
+TIMESTAMP_FORMAT = "%02d:%02d:%06.3f"
 
 
 class WhisperTranscriber(Transcriber):
@@ -38,8 +38,8 @@ def _whisper_to_vtt(segments) -> str:
 
     for i, s in enumerate(segments):
         time_start, time_end = s['start'], s['end']
-        timestamp_start = SRT_TIMESTAMP_FORMAT % _get_hms(time_start)
-        timestamp_end = SRT_TIMESTAMP_FORMAT % _get_hms(time_end)
+        timestamp_start = TIMESTAMP_FORMAT % _get_hms(time_start)
+        timestamp_end = TIMESTAMP_FORMAT % _get_hms(time_end)
 
         vtt.append(f'{i + 1}')
         vtt.append(f'{timestamp_start} --> {timestamp_end}')

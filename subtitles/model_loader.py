@@ -15,7 +15,7 @@ def download_models(model_dir: str, download_urls: [str]) -> None:
         download_urls ([str]): URLs pointing to VOSK Language Models.
     """
     try:
-        os.mkdir(os.path.join(model_dir, '.lock'))
+        os.makedirs(os.path.join(model_dir, '.lock'), exist_ok=True)
     except FileExistsError:
         return  # already downloaded or initiated
 

@@ -76,16 +76,18 @@ class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
                 logging.error(err)
 
 
-def serve(properties: dict, debug: bool = False) -> None:
+def serve(transcriber: Transcriber,
+          receiver: str,
+          port: int,
+          debug: bool = False) -> None:
     """Starts the grpc server.
 
     Args:
-        properties: The configuration of the server.
+        transcriber: The transcriber used.
+        receiver: The network address of the receiver.
+        port: The port on which the voice service listens.
         debug: Whether the server should be started in debug mode or not.
     """
-    transcriber = get_transcriber(properties, debug)
-    receiver = f'{properties["receiver"]["host"]}:{properties["receiver"]["port"]}'
-    port = properties['api']['port']
 
     with ThreadPoolExecutor(max_workers=None) as executor:
         server = grpc.server(executor)
@@ -94,7 +96,6 @@ def serve(properties: dict, debug: bool = False) -> None:
             server=server)
 
         if debug:
-            logging.debug(properties)
             activate_reflection(server)
 
         logging.info(f'listening at :{port}')
@@ -170,7 +171,12 @@ def main():
         logging.error(modelLoadErr)
         sys.exit(3)
 
-    serve(properties, debug)
+    transcriber = get_transcriber(properties, debug)
+    receiver = f'{properties["receiver"]["host"]}:{properties["receiver"]["port"]}'
+    port = properties['api']['port']
+
+    logging.debug(properties)
+    serve(transcriber, receiver, port, debug)
 
 
 if __name__ == "__main__":
