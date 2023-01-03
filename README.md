@@ -88,6 +88,7 @@ VOSK_MODEL_DIR=/data
 VOSK_DWNLD_URLS=https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip,https://alphacephei.com/vosk/models/vosk-model-small-de-0.15.zip
 VOSK_MODELS=model-fr:fr,model-en:en
 WHISPER_MODEL=medium
+MAX_WORKERS=10
 ```
 </p>
 </details>
@@ -114,6 +115,7 @@ vosk:
       lang: 'de'
 whisper:
   model: 'tiny'
+max_workers: 10
 ```
 </p>
 </details>

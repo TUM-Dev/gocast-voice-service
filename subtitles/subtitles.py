@@ -79,6 +79,7 @@ class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
 def serve(transcriber: Transcriber,
           receiver: str,
           port: int,
+          max_workers: int,
           debug: bool = False) -> None:
     """Starts the grpc server.
 
@@ -86,10 +87,11 @@ def serve(transcriber: Transcriber,
         transcriber: The transcriber used.
         receiver: The network address of the receiver.
         port: The port on which the voice service listens.
+        max_workers: The maximum number of threads that can be used to execute the given calls.
         debug: Whether the server should be started in debug mode or not.
     """
 
-    with ThreadPoolExecutor(max_workers=None) as executor:
+    with ThreadPoolExecutor(max_workers) as executor:
         server = grpc.server(executor)
         subtitles_pb2_grpc.add_SubtitleGeneratorServicer_to_server(
             servicer=SubtitleServerService(transcriber, receiver, executor),
@@ -148,7 +150,8 @@ def main():
             'download_urls': [],
             'models': []
         },
-        'whisper': {'model': 'tiny'}
+        'whisper': {'model': 'tiny'},
+        'max_workers': None,
     }
 
     try:
@@ -174,9 +177,10 @@ def main():
     transcriber = get_transcriber(properties, debug)
     receiver = f'{properties["receiver"]["host"]}:{properties["receiver"]["port"]}'
     port = properties['api']['port']
+    max_workers = properties['max_workers']
 
     logging.debug(properties)
-    serve(transcriber, receiver, port, debug)
+    serve(transcriber, receiver, port, max_workers, debug)
 
 
 if __name__ == "__main__":
