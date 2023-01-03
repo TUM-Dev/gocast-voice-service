@@ -77,7 +77,9 @@ class EnvProperties:
 
         properties['whisper']['model'] = os.getenv('WHISPER_MODEL', properties['whisper']['model'])
 
-        properties['max_workers'] = int(os.getenv('MAX_WORKERS', properties['max_workers']))
+        max_workers = os.getenv('MAX_WORKERS', properties['max_workers'])
+        if max_workers:
+            properties['max_workers'] = int(max_workers)
 
         return properties
 
