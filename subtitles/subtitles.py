@@ -1,14 +1,12 @@
 import sys
-import threading
 import logging
 import os
-from signal import signal, SIGTERM, SIGINT, SIGQUIT
-
+from signal import signal, SIGTERM, SIGINT, SIGQUIT, strsignal
+from concurrent.futures import ThreadPoolExecutor
 from properties import YAMLPropertiesFile, EnvProperties, PropertyError
-from concurrent import futures
 from grpc_reflection.v1alpha import reflection
 from grpc._channel import _InactiveRpcError
-
+from google.protobuf import empty_pb2
 from model_loader import download_models, ModelLoadError
 import grpc
 import subtitles_pb2
@@ -21,18 +19,20 @@ from transcriber import Transcriber
 class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
     """grpc service for subtitles"""
 
-    def __init__(self, transcriber: Transcriber, receiver: str) -> None:
+    def __init__(self, transcriber: Transcriber, receiver: str, executor: ThreadPoolExecutor) -> None:
         """Initialize service.
 
         Args:
             transcriber: The transcriber used for subtitle generation.
             receiver: The address of the receiver service.
+            executor: Threadpool for jobs.
         """
         self.__transcriber = transcriber
         self.__receiver = receiver
+        self.__executor = executor
 
     def Generate(self, req: subtitles_pb2.GenerateRequest,
-                 context: grpc.ServicerContext) -> subtitles_pb2.Empty:
+                 context: grpc.ServicerContext) -> empty_pb2.Empty:
         """ Handler function for an incoming Generate request.
 
         Args:
@@ -50,14 +50,13 @@ class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
         logging.debug(f'checking if {source} exists')
         if not os.path.isfile(source):
             context.abort(grpc.StatusCode.NOT_FOUND, f'can not find source file: {source}')
-            return subtitles_pb2.Empty()
+            return empty_pb2.Empty()
 
         logging.debug('starting thread to generate subtitles')
-        threading.Thread(target=self.__generate, args=(self.__transcriber, source, stream_id, language)).start()
+        self.__executor.submit(self.__generate, self.__transcriber, source, stream_id, language)
+        return empty_pb2.Empty()
 
-        return subtitles_pb2.Empty()
-
-    def __generate(self, transcriber: VoskTranscriber, source: str, stream_id: str, language: str) -> None:
+    def __generate(self, transcriber: Transcriber, source: str, stream_id: str, language: str) -> None:
         subtitles, language = transcriber.generate(source, language)
 
         logging.info(f'trying to connect to receiver @ {self.__receiver}')
@@ -77,56 +76,65 @@ class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
                 logging.error(err)
 
 
-def serve(properties: dict, debug: bool = False) -> None:
+def serve(transcriber: Transcriber,
+          receiver: str,
+          port: int,
+          max_workers: int,
+          debug: bool = False) -> None:
     """Starts the grpc server.
 
     Args:
-        properties: The configuration of the server.
+        transcriber: The transcriber used.
+        receiver: The network address of the receiver.
+        port: The port on which the voice service listens.
+        max_workers: The maximum number of threads that can be used to execute the given calls.
         debug: Whether the server should be started in debug mode or not.
     """
-    transcriber = get_transcriber(properties)
-    receiver = f'{properties["receiver"]["host"]}:{properties["receiver"]["port"]}'
 
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))  # TODO: How to determine how many workers? Guess?
-    subtitles_pb2_grpc.add_SubtitleGeneratorServicer_to_server(
-        servicer=SubtitleServerService(transcriber, receiver),
-        server=server)
+    with ThreadPoolExecutor(max_workers) as executor:
+        server = grpc.server(executor)
+        subtitles_pb2_grpc.add_SubtitleGeneratorServicer_to_server(
+            servicer=SubtitleServerService(transcriber, receiver, executor),
+            server=server)
 
-    if debug:
-        logging.debug(properties)
-        logging.debug('starting server with reflection activated.')
-        service_names = (
-            subtitles_pb2.DESCRIPTOR.services_by_name['SubtitleGenerator'].full_name,
-            reflection.SERVICE_NAME,
-        )
-        reflection.enable_server_reflection(service_names, server)
+        if debug:
+            activate_reflection(server)
 
-    port = properties['api']['port']
-    logging.info(f'listening at :{port}')
-    server.add_insecure_port(f'[::]:{port}')
-    server.start()
+        logging.info(f'listening at :{port}')
+        server.add_insecure_port(f'[::]:{port}')
+        server.start()
 
-    def handle_shutdown(*_):
-        logging.info('received shutdown signal')
-        all_requests_done = server.stop(30)
-        all_requests_done.wait(30)
-        logging.info('shut down gracefully')
+        def handle_shutdown(signum, *_):
+            logging.info(f'received "{strsignal(signum)}" signal')
+            all_requests_done = server.stop(30)
+            all_requests_done.wait(30)
+            executor.shutdown(wait=True)
+            logging.info('shut down gracefully')
 
-    signal(SIGTERM, handle_shutdown)
-    signal(SIGINT, handle_shutdown)
-    signal(SIGQUIT, handle_shutdown)
-    server.wait_for_termination()
+        signal(SIGTERM, handle_shutdown)
+        signal(SIGINT, handle_shutdown)
+        signal(SIGQUIT, handle_shutdown)
+        server.wait_for_termination()
 
 
-def get_transcriber(properties: dict) -> Transcriber:
+def get_transcriber(properties: dict, debug: bool) -> Transcriber:
     prop = properties['transcriber']
     if prop == 'whisper':
-        return WhisperTranscriber(properties['whisper']['model'])
+        return WhisperTranscriber(properties['whisper']['model'], debug)
     if prop == 'vosk':
         download_models(properties['vosk']['model_dir'], properties['vosk']['download_urls'])
         models = [{'path': os.path.join(properties['vosk']['model_dir'], m['name']), 'lang': m['lang']}
                   for m in properties['vosk']['models']]
-        return VoskTranscriber(models)
+        return VoskTranscriber(models, debug)
+
+
+def activate_reflection(server: grpc.Server) -> None:
+    logging.debug('starting server with reflection activated.')
+    service_names = (
+        subtitles_pb2.DESCRIPTOR.services_by_name['SubtitleGenerator'].full_name,
+        reflection.SERVICE_NAME,
+    )
+    reflection.enable_server_reflection(service_names, server)
 
 
 def main():
@@ -142,7 +150,8 @@ def main():
             'download_urls': [],
             'models': []
         },
-        'whisper': {'model': 'tiny'}
+        'whisper': {'model': 'tiny'},
+        'max_workers': None,
     }
 
     try:
@@ -165,7 +174,13 @@ def main():
         logging.error(modelLoadErr)
         sys.exit(3)
 
-    serve(properties, debug)
+    transcriber = get_transcriber(properties, debug)
+    receiver = f'{properties["receiver"]["host"]}:{properties["receiver"]["port"]}'
+    port = properties['api']['port']
+    max_workers = properties['max_workers']
+
+    logging.debug(properties)
+    serve(transcriber, receiver, port, max_workers, debug)
 
 
 if __name__ == "__main__":

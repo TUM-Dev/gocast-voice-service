@@ -16,3 +16,4 @@ vosk:
       lang: 'de'
 whisper:
   model: 'tiny'
+max_workers: 12
