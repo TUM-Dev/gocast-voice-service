@@ -30,7 +30,7 @@ Microservice that generates subtitles for [TUM-Live](https://live.rbg.tum.de).
 ```bash
 $ grpcurl -plaintext localhost:50055 list live.voice.v1.SubtitleGenerator
 
-voice.SubtitleGenerator.Generate
+live.voice.v1.SubtitleGenerator.Generate
 ```
 
 ```bash
