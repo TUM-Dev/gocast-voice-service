@@ -1,4 +1,3 @@
-import queue
 import sys
 import logging
 import os
@@ -11,17 +10,18 @@ from model_loader import download_models, ModelLoadError
 import grpc
 import subtitles_pb2
 import subtitles_pb2_grpc
+from taskqueue import TaskQueue
 from vosk_transcriber import VoskTranscriber
 from whisper_transcriber import WhisperTranscriber
 from transcriber import Transcriber
-from tasks import GenerationTask, StopTask
-from generator import Generator
+from tasks import GenerationTask
+from worker import Worker
 
 
 class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
     """grpc service for subtitles"""
 
-    def __init__(self, queue: queue.Queue) -> None:
+    def __init__(self, queue: TaskQueue) -> None:
         """Initialize service"""
         self.__queue = queue
 
@@ -53,14 +53,14 @@ class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
 
 
 def serve(executor: ThreadPoolExecutor,
-          q: queue.Queue,
+          q: TaskQueue,
           port: int,
           debug: bool = False) -> None:
     """Starts the grpc server.
 
     Args:
         executor: The pool of threads
-        q: Queue of generator tasks
+        q: Queue of tasks
         port: The port on which the voice service listens.
         debug: Whether the server should be started in debug mode or not.
     """
@@ -80,7 +80,7 @@ def serve(executor: ThreadPoolExecutor,
         logging.info(f'received "{strsignal(signum)}" signal')
         all_requests_done = server.stop(16)
         all_requests_done.wait(16)
-        q.put(StopTask())
+        q.stop()
         executor.shutdown(wait=True)
         logging.info('shut down gracefully')
 
@@ -140,12 +140,13 @@ def main():
     receiver = f'{properties["receiver"]["host"]}:{properties["receiver"]["port"]}'
     port = properties['api']['port']
     max_workers = properties['max_workers']
+    task_executor_cnt = 3
 
     logging.debug(properties)
 
-    q = queue.Queue()
+    q = TaskQueue(task_executor_cnt)
     with ThreadPoolExecutor(max_workers) as executor:
-        Generator(transcriber, receiver, executor, q)
+        [Worker(transcriber, receiver, executor, q) for _ in range(task_executor_cnt)]
         serve(executor, q, port, debug)
 
 

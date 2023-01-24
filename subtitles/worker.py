@@ -1,27 +1,25 @@
 import logging
-import queue
-
-import subtitles_pb2, subtitles_pb2_grpc
-import grpc
-from grpc._channel import _InactiveRpcError
 from concurrent.futures import ThreadPoolExecutor
-from transcriber import Transcriber
+import subtitles_pb2
 from tasks import GenerationTask, StopTask
+from taskqueue import TaskQueue
+from transcriber import Transcriber
+from client import receive
 
 
-class Generator:
+class Worker:
     """Thread for subtitle generation"""
 
     def __init__(self,
                  transcriber: Transcriber,
                  receiver: str,
                  executor: ThreadPoolExecutor,
-                 taskqueue: queue.Queue):
+                 taskqueue: TaskQueue):
         """Start the generator threads."""
         executor.submit(run, transcriber, receiver, taskqueue)
 
 
-def run(transcriber: Transcriber, receiver: str, taskqueue: queue.Queue):
+def run(transcriber: Transcriber, receiver: str, taskqueue: TaskQueue) -> None:
     while True:
         logging.info('worker: waiting for task...')
         task = taskqueue.get()
@@ -36,18 +34,9 @@ def run(transcriber: Transcriber, receiver: str, taskqueue: queue.Queue):
 def generate(transcriber: Transcriber, receiver: str, task: GenerationTask) -> None:
     subtitles, language = transcriber.generate(task.source, task.language)
 
-    logging.info(f'worker: trying to connect to receiver @ {receiver}')
-    with grpc.insecure_channel(receiver) as channel:
-        stub = subtitles_pb2_grpc.SubtitleReceiverStub(channel)
-        request = subtitles_pb2.ReceiveRequest(
-            stream_id=task.stream_id,
-            subtitles=subtitles,
-            language=language)
-
-        try:
-            stub.Receive(request)
-            logging.info('worker: subtitle-request sent')
-        except _InactiveRpcError as grpc_err:
-            logging.error(grpc_err.details())
-        except Exception as err:
-            logging.error(err)
+    logging.info(f'worker: sending receive message to receiver @ {receiver}')
+    receive(receiver,
+            req=subtitles_pb2.ReceiveRequest(
+                stream_id=task.stream_id,
+                subtitles=subtitles,
+                language=language))
