@@ -139,14 +139,14 @@ def main():
     transcriber = get_transcriber(properties, debug)
     receiver = f'{properties["receiver"]["host"]}:{properties["receiver"]["port"]}'
     port = properties['api']['port']
-    max_workers = properties['max_workers']
-    task_executor_cnt = 3
+    max_threads = properties['max_threads']
+    cnt_workers = properties['cnt_workers']
 
     logging.debug(properties)
 
-    q = TaskQueue(task_executor_cnt)
-    with ThreadPoolExecutor(max_workers) as executor:
-        [Worker(transcriber, receiver, executor, q) for _ in range(task_executor_cnt)]
+    q = TaskQueue(cnt_workers)
+    with ThreadPoolExecutor(max_threads) as executor:
+        [Worker(transcriber, receiver, executor, q) for _ in range(cnt_workers)]
         serve(executor, q, port, debug)
 
 
