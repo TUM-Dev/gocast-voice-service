@@ -3,6 +3,19 @@ from dotenv import load_dotenv
 import os.path
 import yaml
 
+DEFAULT_PROPERTIES = {
+    'api': {'port': 50055},
+    'receiver': {'host': 'localhost', 'port': '50053'},
+    'transcriber': 'whisper',
+    'vosk': {
+        'model_dir': '/tmp',
+        'download_urls': [],
+        'models': []
+    },
+    'whisper': {'model': 'tiny'},
+    'max_workers': None,
+}
+
 
 class PropertyError(Exception):
     pass

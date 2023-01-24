@@ -4,7 +4,7 @@ import logging
 import os
 from signal import signal, SIGTERM, SIGINT, SIGQUIT, strsignal
 from concurrent.futures import ThreadPoolExecutor
-from properties import YAMLPropertiesFile, EnvProperties, PropertyError
+from properties import YAMLPropertiesFile, EnvProperties, PropertyError, DEFAULT_PROPERTIES
 from grpc_reflection.v1alpha import reflection
 from google.protobuf import empty_pb2
 from model_loader import download_models, ModelLoadError
@@ -114,18 +114,7 @@ def main():
     debug = os.getenv('DEBUG', '') != ""
     logging.basicConfig(level=(logging.INFO, logging.DEBUG)[debug])
 
-    properties = {
-        'api': {'port': 50055},
-        'receiver': {'host': 'localhost', 'port': '50053'},
-        'transcriber': 'whisper',
-        'vosk': {
-            'model_dir': '/tmp',
-            'download_urls': [],
-            'models': []
-        },
-        'whisper': {'model': 'tiny'},
-        'max_workers': None,
-    }
+    properties = DEFAULT_PROPERTIES
 
     try:
         config_file = os.getenv("CONFIG_FILE")
