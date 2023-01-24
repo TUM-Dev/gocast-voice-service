@@ -16,4 +16,5 @@ vosk:
       lang: 'de'
 whisper:
   model: 'tiny'
-max_workers: 12
+max_threads: 12
+cnt_workers: 3
