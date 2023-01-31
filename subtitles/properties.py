@@ -3,6 +3,20 @@ from dotenv import load_dotenv
 import os.path
 import yaml
 
+DEFAULT_PROPERTIES = {
+    'api': {'port': 50055},
+    'receiver': {'host': 'localhost', 'port': '50053'},
+    'transcriber': 'whisper',
+    'vosk': {
+        'model_dir': '/tmp',
+        'download_urls': [],
+        'models': []
+    },
+    'whisper': {'model': 'tiny'},
+    'max_threads': None,
+    'cnt_workers': 1,
+}
+
 
 class PropertyError(Exception):
     pass
@@ -77,9 +91,13 @@ class EnvProperties:
 
         properties['whisper']['model'] = os.getenv('WHISPER_MODEL', properties['whisper']['model'])
 
-        max_workers = os.getenv('MAX_WORKERS', properties['max_workers'])
-        if max_workers:
-            properties['max_workers'] = int(max_workers)
+        max_threads = os.getenv('MAX_THREADS', properties['max_threads'])
+        if max_threads:
+            properties['max_threads'] = int(max_threads)
+
+        cnt_workers = os.getenv('CNT_WORKERS', properties['cnt_workers'])
+        if cnt_workers:
+            properties['cnt_workers'] = int(cnt_workers)
 
         return properties
 

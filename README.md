@@ -30,7 +30,7 @@ Microservice that generates subtitles for [TUM-Live](https://live.rbg.tum.de).
 ```bash
 $ grpcurl -plaintext localhost:50055 list live.voice.v1.SubtitleGenerator
 
-voice.SubtitleGenerator.Generate
+live.voice.v1.SubtitleGenerator.Generate
 ```
 
 ```bash
@@ -88,7 +88,8 @@ VOSK_MODEL_DIR=/data
 VOSK_DWNLD_URLS=https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip,https://alphacephei.com/vosk/models/vosk-model-small-de-0.15.zip
 VOSK_MODELS=model-fr:fr,model-en:en
 WHISPER_MODEL=medium
-MAX_WORKERS=10
+MAX_THREADS=10
+CNT_WORKERS=3
 ```
 </p>
 </details>
@@ -115,7 +116,8 @@ vosk:
       lang: 'de'
 whisper:
   model: 'tiny'
-max_workers: 10
+max_threads: 12
+cnt_workers: 3
 ```
 </p>
 </details>
