@@ -62,11 +62,25 @@ Or simply use an open source IDE like [PyCharm CE](https://www.jetbrains.com/pyc
 ```bash
 $ docker run -p 50055:50055 \
   --name voice-service \
-  -v /srv/static:/data \
+  -v /srv/static:/mass \
   -e CONFIG_FILE=./config.yml \
   -e DEBUG=.\
   -d \
   ghcr.io/tum-dev/tum-live-voice-service:latest
+```
+
+To make use of Nvidia hardware acceleration build the `Dockerfile.nvidia`:
+
+```bash
+$ docker build -t tum-live-voice-service-nvidia --file Dockerfile.nvidia .
+$ docker run -p 50055:50055 \
+  --name voice-service \
+  --gpus all \ 
+  -v /srv/static:/mass \
+  -e CONFIG_FILE=./config.yml \
+  -e DEBUG=.\
+  -d \
+  tum-live-voice-service-nvidia:latest
 ```
 
 ## Configuration 
