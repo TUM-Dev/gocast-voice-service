@@ -29,4 +29,4 @@ typing_extensions==4.4.0
 urllib3==1.26.13
 vosk==0.3.44
 websockets==10.4
-whisper @ git+https://github.com/openai/whisper.git@4179ed2475cc84cba66868b516232ef1b74dacdf
+whisper @ git+https://github.com/openai/whisper.git@7858aa9c08d98f75575035ecd6481f462d66ca27
