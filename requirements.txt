@@ -3,7 +3,7 @@ cffi==1.15.1
 charset-normalizer==2.1.1
 ffmpeg-python==0.2.0
 filelock==3.8.2
-future==0.18.2
+future==0.18.3
 grpcio==1.51.1
 grpcio-reflection==1.51.1
 grpcio-tools==1.51.1
