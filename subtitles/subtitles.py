@@ -16,7 +16,7 @@ from whisper_transcriber import WhisperTranscriber
 from transcriber import Transcriber
 from tasks import GenerationTask
 from worker import Worker
-
+import urllib3
 
 class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
     """grpc service for subtitles"""
@@ -42,7 +42,18 @@ class SubtitleServerService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
         stream_id: str = req.stream_id
 
         logging.debug(f'checking if {source} exists')
-        if not os.path.isfile(source):
+
+        if source.startswith("https://"):
+            http = urllib3.PoolManager()
+            try:
+                r = http.request('GET', source)
+            except urllib3.exceptions.HTTPError:
+                context.abort(grpc.StatusCode.NOT_FOUND, f'source url unavailable: {source}')
+                return
+            if r.status != 200:
+                context.abort(grpc.StatusCode.NOT_FOUND, f'source url replies with status {r.status}: {source}')
+                return
+        elif not os.path.isfile(source):
             context.abort(grpc.StatusCode.NOT_FOUND, f'can not find source file: {source}')
             return
 
