@@ -29,4 +29,4 @@ typing_extensions==4.4.0
 urllib3==1.26.13
 vosk==0.3.44
 websockets==10.4
-openai-whisper==20230124
+openai-whisper==20230308 
