@@ -2,6 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
+from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 import subtitles_pb2 as subtitles__pb2
 
 
@@ -16,9 +17,9 @@ class SubtitleGeneratorStub(object):
             channel: A grpc.Channel.
         """
         self.Generate = channel.unary_unary(
-                '/voice.SubtitleGenerator/Generate',
+                '/live.voice.v1.SubtitleGenerator/Generate',
                 request_serializer=subtitles__pb2.GenerateRequest.SerializeToString,
-                response_deserializer=subtitles__pb2.Empty.FromString,
+                response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
                 )
 
 
@@ -38,11 +39,11 @@ def add_SubtitleGeneratorServicer_to_server(servicer, server):
             'Generate': grpc.unary_unary_rpc_method_handler(
                     servicer.Generate,
                     request_deserializer=subtitles__pb2.GenerateRequest.FromString,
-                    response_serializer=subtitles__pb2.Empty.SerializeToString,
+                    response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'voice.SubtitleGenerator', rpc_method_handlers)
+            'live.voice.v1.SubtitleGenerator', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
@@ -62,9 +63,9 @@ class SubtitleGenerator(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/voice.SubtitleGenerator/Generate',
+        return grpc.experimental.unary_unary(request, target, '/live.voice.v1.SubtitleGenerator/Generate',
             subtitles__pb2.GenerateRequest.SerializeToString,
-            subtitles__pb2.Empty.FromString,
+            google_dot_protobuf_dot_empty__pb2.Empty.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -80,9 +81,9 @@ class SubtitleReceiverStub(object):
             channel: A grpc.Channel.
         """
         self.Receive = channel.unary_unary(
-                '/voice.SubtitleReceiver/Receive',
+                '/live.voice.v1.SubtitleReceiver/Receive',
                 request_serializer=subtitles__pb2.ReceiveRequest.SerializeToString,
-                response_deserializer=subtitles__pb2.Empty.FromString,
+                response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
                 )
 
 
@@ -102,11 +103,11 @@ def add_SubtitleReceiverServicer_to_server(servicer, server):
             'Receive': grpc.unary_unary_rpc_method_handler(
                     servicer.Receive,
                     request_deserializer=subtitles__pb2.ReceiveRequest.FromString,
-                    response_serializer=subtitles__pb2.Empty.SerializeToString,
+                    response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'voice.SubtitleReceiver', rpc_method_handlers)
+            'live.voice.v1.SubtitleReceiver', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
@@ -126,8 +127,8 @@ class SubtitleReceiver(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/voice.SubtitleReceiver/Receive',
+        return grpc.experimental.unary_unary(request, target, '/live.voice.v1.SubtitleReceiver/Receive',
             subtitles__pb2.ReceiveRequest.SerializeToString,
-            subtitles__pb2.Empty.FromString,
+            google_dot_protobuf_dot_empty__pb2.Empty.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
