@@ -1,7 +1,8 @@
 import logging
+import subprocess
 from concurrent.futures import ThreadPoolExecutor
 import subtitles_pb2
-from tasks import GenerationTask, StopTask
+from tasks import GenerationTask, StopTask, ExtractAudioTask
 from taskqueue import TaskQueue
 from transcriber import Transcriber
 from client import receive
@@ -27,6 +28,10 @@ def run(transcriber: Transcriber, receiver: str, taskqueue: TaskQueue) -> None:
             logging.info('worker: starting to generate subtitles...')
             logging.debug(f'worker: task: {task}')
             generate(transcriber, receiver, task)
+        if isinstance(task, ExtractAudioTask):
+            logging.info('worker: starting to extract audio...')
+            logging.debug(f'worker: task: {task}')
+            extract_audio(receiver, task)
         elif isinstance(task, StopTask):
             break
 
@@ -40,3 +45,16 @@ def generate(transcriber: Transcriber, receiver: str, task: GenerationTask) -> N
                 stream_id=task.stream_id,
                 subtitles=subtitles,
                 language=language))
+
+
+def extract_audio(receiver: str, task: ExtractAudioTask) -> None:
+    with subprocess.Popen(['ffmpeg',
+                           '-i', task.source,
+                           '-vn',
+                           '-async', '1',
+                           '-q:a', '1',
+                           '-map', '0:a',
+                           '-f', 'mp3', "-"],
+                          stdout=subprocess.PIPE).stdout as stream:
+        with open('test.mp3', 'wb') as file:
+            file.write(stream.read())

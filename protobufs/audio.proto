@@ -1,0 +1,14 @@
+syntax = "proto3";
+package live.voice.v1;
+
+import "google/protobuf/empty.proto";
+
+// Implemented in voice-service
+service Audio {
+  rpc Extract (ExtractRequest) returns (google.protobuf.Empty) {}
+}
+
+message ExtractRequest {
+  int32 stream_id = 1;
+  string source_file = 2;
+}
