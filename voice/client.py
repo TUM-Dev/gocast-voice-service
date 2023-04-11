@@ -2,7 +2,8 @@
 
 import logging
 import grpc
-import subtitles_pb2_grpc, subtitles_pb2
+import subtitles_pb2_grpc
+import subtitles_pb2
 from grpc._channel import _InactiveRpcError
 
 

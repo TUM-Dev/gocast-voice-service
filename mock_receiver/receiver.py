@@ -1,6 +1,6 @@
 import grpc
 from concurrent import futures
-from subtitles import subtitles_pb2_grpc, subtitles_pb2
+from voice import subtitles_pb2_grpc, subtitles_pb2
 
 
 class ReceiverService(subtitles_pb2_grpc.SubtitleReceiverServicer):

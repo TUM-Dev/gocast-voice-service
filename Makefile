@@ -6,4 +6,4 @@ requirements:
 	pip freeze > requirements.txt
 
 lint:
-	 flake8 ./subtitles --exclude=./subtitles/subtitles_pb2.py,./subtitles/subtitles_pb2_grpc.py --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+	 flake8 ./voice --exclude=./voice/subtitles_pb2.py,./voice/subtitles_pb2_grpc.py,./voice/audio_pb2.py,./voice/audio_pb2_grpc.py --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics

@@ -12,9 +12,9 @@ WORKDIR /usr/src/app
 
 RUN apt-get update && apt-get install -y ffmpeg
 
-ADD subtitles/ ./subtitles/
+ADD voice/ ./voice/
 ADD config.yml .
 
 COPY --from=builder /root/.local /root/.local
 
-CMD ["python", "./subtitles/subtitles.py"]
+CMD ["python", "./voice/voice.py"]

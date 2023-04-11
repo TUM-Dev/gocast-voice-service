@@ -3,7 +3,8 @@ import logging
 import grpc
 from google.protobuf import empty_pb2
 
-import subtitles_pb2, subtitles_pb2_grpc
+import subtitles_pb2
+import subtitles_pb2_grpc
 from path import InvalidPathException, file_exists
 from taskqueue import TaskQueue
 from tasks import GenerationTask

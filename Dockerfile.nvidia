@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y git ffmpeg &&\
 
 WORKDIR /usr/src/app
 
-ADD subtitles/ ./subtitles/
+ADD voice/ ./voice/
 ADD config.yml .
 
-CMD ["python3", "./subtitles/subtitles.py"]
+CMD ["python3", "./voice/voice.py"]
