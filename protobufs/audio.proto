@@ -9,7 +9,6 @@ service Audio {
 }
 
 message ExtractRequest {
-  int32 stream_id = 1;
-  string source_file = 2;
-  string destination = 3;
+  string source_file = 1;
+  string destination = 2;
 }

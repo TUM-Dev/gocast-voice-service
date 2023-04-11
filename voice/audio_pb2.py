@@ -14,7 +14,7 @@ _sym_db = _symbol_database.Default()
 from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0b\x61udio.proto\x12\rlive.voice.v1\x1a\x1bgoogle/protobuf/empty.proto\"M\n\x0e\x45xtractRequest\x12\x11\n\tstream_id\x18\x01 \x01(\x05\x12\x13\n\x0bsource_file\x18\x02 \x01(\t\x12\x13\n\x0b\x64\x65stination\x18\x03 \x01(\t2K\n\x05\x41udio\x12\x42\n\x07\x45xtract\x12\x1d.live.voice.v1.ExtractRequest\x1a\x16.google.protobuf.Empty\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0b\x61udio.proto\x12\rlive.voice.v1\x1a\x1bgoogle/protobuf/empty.proto\":\n\x0e\x45xtractRequest\x12\x13\n\x0bsource_file\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65stination\x18\x02 \x01(\t2K\n\x05\x41udio\x12\x42\n\x07\x45xtract\x12\x1d.live.voice.v1.ExtractRequest\x1a\x16.google.protobuf.Empty\"\x00\x62\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'audio_pb2', globals())
@@ -22,7 +22,7 @@ if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
   _EXTRACTREQUEST._serialized_start=59
-  _EXTRACTREQUEST._serialized_end=136
-  _AUDIO._serialized_start=138
-  _AUDIO._serialized_end=213
+  _EXTRACTREQUEST._serialized_end=117
+  _AUDIO._serialized_start=119
+  _AUDIO._serialized_end=194
 # @@protoc_insertion_point(module_scope)

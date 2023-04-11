@@ -11,7 +11,6 @@ class GenerationTask:
 @dataclass
 class ExtractAudioTask:
     source: str
-    stream_id: str
     destination: str
 
 

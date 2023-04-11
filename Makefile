@@ -1,6 +1,6 @@
 proto:
-	python -m grpc_tools.protoc -I ./protobufs --python_out=./subtitles --grpc_python_out=./subtitles ./protobufs/*.proto \
-	&& cp ./subtitles/subtitles_pb2*.py ./mock_receiver/
+	python -m grpc_tools.protoc -I ./protobufs --python_out=./voice --grpc_python_out=./voice ./protobufs/*.proto \
+	&& cp ./voice/subtitles_pb2*.py ./mock_receiver/
 
 requirements:
 	pip freeze > requirements.txt

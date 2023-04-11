@@ -29,15 +29,21 @@ Microservice that generates subtitles for [TUM-Live](https://live.rbg.tum.de).
 
 ```bash
 $ grpcurl -plaintext localhost:50055 list live.voice.v1.SubtitleGenerator
-
 live.voice.v1.SubtitleGenerator.Generate
-```
 
-```bash
 $ grpcurl -plaintext \
-  -d '{"stream_id":1, "source_file":"/tmp/120.mp4"}' \
+  -d '{"stream_id":1, "source_file":"/mass/video/video.mp4"}' \
   -import-path ./protobufs -proto subtitles.proto \
   localhost:50055 live.voice.v1.SubtitleGenerator.Generate
+```
+```bash
+$ grpcurl -plaintext localhost:50055 list live.voice.v1.Audio
+live.voice.v1.Audio.Extract
+
+$ grpcurl -plaintext \
+  -d '{"source_file":"/mass/video/video.mp4","destination":"/mass/audio/audio.mp3"}' \
+  -import-path ./protobufs -proto audio.proto \
+  localhost:50055 live.voice.v1.Audio.Extract
 ```
 
 ## Installation
@@ -51,7 +57,7 @@ $ cd TUM-Live-Voice-Service
 $ python -m venv venv
 $ source venv/bin/activate
 (venv) $ pip install --no-cache-dir -r requirements.txt 
-(venv) $ DEBUG=. CONFIG_FILE=./config.yml python3.9 subtitles/subtitles.py
+(venv) $ DEBUG=. CONFIG_FILE=./config.yml python3.9 voice/voice.py
 ...
 ```
 

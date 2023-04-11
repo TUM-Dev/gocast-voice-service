@@ -15,7 +15,6 @@ class AudioService(audio_pb2_grpc.AudioServicer):
 
     def Extract(self, req, context):
         source: str = req.source_file
-        stream_id: str = req.stream_id
         destination: str = req.destination
 
         logging.debug(f'checking if {source} exists')
@@ -26,6 +25,6 @@ class AudioService(audio_pb2_grpc.AudioServicer):
             context.abort(e.grpc_code, e.__str__())
 
         logging.debug('enqueue extract request')
-        self.__queue.put(ExtractAudioTask(source, stream_id, destination))
+        self.__queue.put(ExtractAudioTask(source, destination))
 
         return empty_pb2.Empty()
