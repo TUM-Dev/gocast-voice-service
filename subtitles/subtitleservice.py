@@ -4,7 +4,7 @@ import grpc
 from google.protobuf import empty_pb2
 
 import subtitles_pb2, subtitles_pb2_grpc
-from path import InvalidPathException, is_valid_path
+from path import InvalidPathException, file_exists
 from taskqueue import TaskQueue
 from tasks import GenerationTask
 
@@ -33,7 +33,7 @@ class SubtitleService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
 
         logging.debug(f'checking if {source} exists')
         try:
-            is_valid_path(source)
+            file_exists(source)
         except InvalidPathException as e:
             context.abort(e.grpc_code, e.__str__())
 

@@ -12,6 +12,7 @@ class GenerationTask:
 class ExtractAudioTask:
     source: str
     stream_id: str
+    destination: str
 
 
 class StopTask:

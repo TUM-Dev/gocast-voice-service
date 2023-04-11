@@ -1,6 +1,9 @@
 import logging
+import os.path
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+
 import subtitles_pb2
 from tasks import GenerationTask, StopTask, ExtractAudioTask
 from taskqueue import TaskQueue
@@ -31,7 +34,7 @@ def run(transcriber: Transcriber, receiver: str, taskqueue: TaskQueue) -> None:
         if isinstance(task, ExtractAudioTask):
             logging.info('worker: starting to extract audio...')
             logging.debug(f'worker: task: {task}')
-            extract_audio(receiver, task)
+            extract_audio(task)
         elif isinstance(task, StopTask):
             break
 
@@ -47,14 +50,11 @@ def generate(transcriber: Transcriber, receiver: str, task: GenerationTask) -> N
                 language=language))
 
 
-def extract_audio(receiver: str, task: ExtractAudioTask) -> None:
-    with subprocess.Popen(['ffmpeg',
-                           '-i', task.source,
-                           '-vn',
-                           '-async', '1',
-                           '-q:a', '1',
-                           '-map', '0:a',
-                           '-f', 'mp3', "-"],
-                          stdout=subprocess.PIPE).stdout as stream:
-        with open('test.mp3', 'wb') as file:
-            file.write(stream.read())
+def extract_audio(task: ExtractAudioTask) -> None:
+    output = os.path.join(task.destination, Path(task.source).stem + '.mp3')
+    subprocess.Popen(['ffmpeg',
+                      '-y',
+                      '-loglevel', 'quiet',
+                      '-i', task.source, '-vn',
+                      '-async', '1', '-q:a', '1', '-map', '0:a',
+                      '-f', 'mp3', output])
