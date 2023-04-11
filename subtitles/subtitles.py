@@ -5,95 +5,18 @@ from signal import signal, SIGTERM, SIGINT, SIGQUIT, strsignal
 from concurrent.futures import ThreadPoolExecutor
 from properties import YAMLPropertiesFile, EnvProperties, PropertyError, DEFAULT_PROPERTIES
 from grpc_reflection.v1alpha import reflection
-from google.protobuf import empty_pb2
 from model_loader import download_models, ModelLoadError
 import grpc
-import audio_pb2
 import audio_pb2_grpc
 import subtitles_pb2
 import subtitles_pb2_grpc
+from audioservice import AudioService
+from subtitleservice import SubtitleService
 from taskqueue import TaskQueue
 from vosk_transcriber import VoskTranscriber
 from whisper_transcriber import WhisperTranscriber
 from transcriber import Transcriber
-from tasks import GenerationTask, ExtractAudioTask
 from worker import Worker
-import urllib3
-
-
-class AudioService(audio_pb2_grpc.AudioServicer):
-    """grpc service for audio related functions"""
-    def __init__(self, queue: TaskQueue) -> None:
-        self.__queue = queue
-
-    def Extract(self, req, context):
-        source: str = req.source_file
-        stream_id: str = req.stream_id
-
-        logging.debug(f'checking if {source} exists')
-
-        if source.startswith("https://"):
-            http = urllib3.PoolManager()
-            try:
-                r = http.request('GET', source)
-            except urllib3.exceptions.HTTPError:
-                context.abort(grpc.StatusCode.NOT_FOUND, f'source url unavailable: {source}')
-                return
-            if r.status != 200:
-                context.abort(grpc.StatusCode.NOT_FOUND, f'source url replies with status {r.status}: {source}')
-                return
-        elif not os.path.isfile(source):
-            context.abort(grpc.StatusCode.NOT_FOUND, f'can not find source file: {source}')
-            return
-
-        logging.debug('enqueue extract request')
-        self.__queue.put(ExtractAudioTask(source, stream_id))
-
-        return empty_pb2.Empty()
-
-
-class SubtitleService(subtitles_pb2_grpc.SubtitleGeneratorServicer):
-    """grpc service for subtitles"""
-
-    def __init__(self, queue: TaskQueue) -> None:
-        self.__queue = queue
-
-    def Generate(self, req: subtitles_pb2.GenerateRequest,
-                 context: grpc.ServicerContext) -> empty_pb2.Empty:
-        """Handler function for an incoming Generate request.
-
-        Args:
-            req: An object holding the grpc message data.
-            context: A context object passed to method implementations.
-                Visit https://grpc.github.io/grpc/python/grpc.html#service-side-context for more information.
-
-        Returns:
-            subtitles_pb2.Empty
-        """
-        source: str = req.source_file
-        language: str = req.language or None
-        stream_id: str = req.stream_id
-
-        logging.debug(f'checking if {source} exists')
-
-        if source.startswith("https://"):
-            http = urllib3.PoolManager()
-            try:
-                r = http.request('GET', source)
-            except urllib3.exceptions.HTTPError:
-                context.abort(grpc.StatusCode.NOT_FOUND, f'source url unavailable: {source}')
-                return
-            if r.status != 200:
-                context.abort(grpc.StatusCode.NOT_FOUND, f'source url replies with status {r.status}: {source}')
-                return
-        elif not os.path.isfile(source):
-            context.abort(grpc.StatusCode.NOT_FOUND, f'can not find source file: {source}')
-            return
-
-        logging.debug('enqueue generate request')
-        self.__queue.put(GenerationTask(source, language, stream_id))
-
-        return empty_pb2.Empty()
 
 
 def serve(executor: ThreadPoolExecutor,
