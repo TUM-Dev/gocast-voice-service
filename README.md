@@ -41,7 +41,7 @@ $ grpcurl -plaintext localhost:50055 list live.voice.v1.Audio
 live.voice.v1.Audio.Extract
 
 $ grpcurl -plaintext \
-  -d '{"source_file":"/mass/video/video.mp4","destination":"/mass/audio/audio.mp3"}' \
+  -d '{"source_file":"/mass/video/video.mp4","destination":"/mass/audio"}' \
   -import-path ./protobufs -proto audio.proto \
   localhost:50055 live.voice.v1.Audio.Extract
 ```

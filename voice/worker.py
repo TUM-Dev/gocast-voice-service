@@ -51,10 +51,18 @@ def generate(transcriber: Transcriber, receiver: str, task: GenerationTask) -> N
 
 
 def extract_audio(task: ExtractAudioTask) -> None:
-    output = os.path.join(task.destination, Path(task.source).stem + '.mp3')
+    playlist = os.path.join(task.destination, Path(task.source).stem + '.m3u8')
+    segment_filename = os.path.join(task.destination, 'segment%04d.ts')
+
     subprocess.Popen(['ffmpeg',
                       '-y',
-                      '-loglevel', 'quiet',
-                      '-i', task.source, '-vn',
-                      '-async', '1', '-q:a', '1', '-map', '0:a',
-                      '-f', 'mp3', output])
+                      '-i', task.source,
+                      '-c:a', 'aac',
+                      '-f', 'hls',
+                      '-hls_time', '8',
+                      '-hls_playlist_type', 'vod',
+                      '-hls_flags', 'independent_segments',
+                      '-hls_segment_type', 'mpegts',
+                      '-hls_segment_filename', segment_filename,
+                      '-vn',
+                      playlist])
