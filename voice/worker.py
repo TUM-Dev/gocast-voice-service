@@ -5,7 +5,7 @@ from tasks import GenerationTask, StopTask, ExtractAudioTask
 from taskqueue import TaskQueue
 from transcriber import Transcriber
 from client import receive
-from voice.audio_functions import ffmpeg_video_to_hls_audio
+from audio_functions import ffmpeg_video_to_hls_audio
 
 
 class Worker:
