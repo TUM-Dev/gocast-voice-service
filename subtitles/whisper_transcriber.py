@@ -1,5 +1,7 @@
+import io
 from transcriber import Transcriber
 import whisper
+from whisper import utils
 
 TIMESTAMP_FORMAT = "%02d:%02d:%06.3f"
 
@@ -24,29 +26,16 @@ class WhisperTranscriber(Transcriber):
         # solve silence issue. see: https://github.com/openai/whisper/discussions/29
         result = transcriber.transcribe(source,
                                         **options.__dict__,
+                                        word_timestamps=True,
                                         logprob_threshold=None,
                                         no_speech_threshold=0.275,
                                         verbose=self.__verbose)
         language = result['language']
 
-        return _whisper_to_vtt(result['segments']), language
-
-
-def _whisper_to_vtt(segments) -> str:
-    """Return WebVTT subtitle string"""
-    vtt = ['WEBVTT\n']
-
-    for i, s in enumerate(segments):
-        time_start, time_end = s['start'], s['end']
-        timestamp_start = TIMESTAMP_FORMAT % _get_hms(time_start)
-        timestamp_end = TIMESTAMP_FORMAT % _get_hms(time_end)
-
-        vtt.append(f'{i + 1}')
-        vtt.append(f'{timestamp_start} --> {timestamp_end}')
-        vtt.append(s['text'].strip() + "\n")
-
-    return '\n'.join(vtt)
-
-
-def _get_hms(time: float) -> (float, float, float):
-    return int(time / 3600), (time / 60) % 60, time % 60
+        vtt = io.StringIO()
+        utils.WriteVTT('').write_result(result, vtt, {
+            'max_line_width': 42,
+            'max_line_count': 2,
+            'highlight_words': False,
+        })
+        return vtt.getvalue(), language
