@@ -1,6 +1,7 @@
 import grpc
 from concurrent import futures
-from subtitles import subtitles_pb2_grpc, subtitles_pb2
+import subtitles_pb2_grpc, subtitles_pb2
+from google.protobuf import empty_pb2
 
 
 class ReceiverService(subtitles_pb2_grpc.SubtitleReceiverServicer):
@@ -9,7 +10,7 @@ class ReceiverService(subtitles_pb2_grpc.SubtitleReceiverServicer):
     def __init__(self, save_to_file: bool):
         self.__save_to_file = save_to_file
 
-    def Receive(self, req, context) -> subtitles_pb2.Empty:
+    def Receive(self, req, context) -> empty_pb2:
         """ Handler function for an incoming Receive request. Adjust method as needed."""
         print(req)
 
@@ -17,7 +18,7 @@ class ReceiverService(subtitles_pb2_grpc.SubtitleReceiverServicer):
             with open('test.srt', 'w') as file:
                 file.write(req.subtitles)
 
-        return subtitles_pb2.Empty()
+        return empty_pb2.Empty()
 
 
 def serve(port: int, save_to_file: bool = False) -> None:
