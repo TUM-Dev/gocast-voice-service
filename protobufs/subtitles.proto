@@ -1,6 +1,8 @@
 syntax = "proto3";
 package live.voice.v1;
 
+option go_package = "./pb";
+
 import "google/protobuf/empty.proto";
 
 // Implemented in voice-service
@@ -21,6 +23,6 @@ message ReceiveRequest {
 
 message GenerateRequest {
   int32 stream_id = 1;
-  string source_file = 2;
+  string source = 2;
   string language = 3;
 }

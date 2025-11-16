@@ -1,20 +1,18 @@
-FROM python:3.9-slim as builder
+FROM golang:1.25.1-alpine AS builder
 
-ADD requirements.txt .
+WORKDIR /app
 
-# Dependencies
-RUN apt-get update && apt-get install -y git &&\
-         pip install --user --no-cache-dir -r requirements.txt 
+# Copy go.mod and go.sum to leverage Docker's layer caching
+COPY go.mod go.sum ./
+RUN go mod download
 
-FROM python:3.9-slim
+COPY . .
+RUN go build -o /voice-service cmd/voice-service/main.go
 
-WORKDIR /usr/src/app
+FROM alpine:latest
 
-RUN apt-get update && apt-get install -y ffmpeg
+COPY --from=builder /voice-service /voice-service
 
-ADD subtitles/ ./subtitles/
-ADD config.yml .
+EXPOSE 50053
 
-COPY --from=builder /root/.local /root/.local
-
-CMD ["python", "./subtitles/subtitles.py"]
+ENTRYPOINT ["/voice-service"]
