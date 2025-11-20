@@ -13,6 +13,8 @@ FROM alpine:latest
 
 COPY --from=builder /voice-service /voice-service
 
+RUN apk add ffmpeg
+
 EXPOSE 50053
 
 ENTRYPOINT ["/voice-service"]
