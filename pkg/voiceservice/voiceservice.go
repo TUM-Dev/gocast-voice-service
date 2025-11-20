@@ -132,7 +132,7 @@ func (a *App) handle(ctx context.Context, req *pb.GenerateRequest) error {
 		}
 	}()
 
-	cmd := exec.CommandContext(ctx, "ffmpeg", strings.Split("-loglevel warn -nostats -i "+req.GetSource()+" -c:a aac -vn "+tmpFile, " ")...)
+	cmd := exec.CommandContext(ctx, "ffmpeg", strings.Split("-loglevel warning -nostats -i "+req.GetSource()+" -c:a aac -vn "+tmpFile, " ")...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
