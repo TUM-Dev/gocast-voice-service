@@ -17,4 +17,6 @@ RUN apk add ffmpeg
 
 EXPOSE 50053
 
+COPY config.json /root/.docker/config.json
+
 ENTRYPOINT ["/voice-service"]

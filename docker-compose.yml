@@ -2,7 +2,6 @@ services:
   gocast-voice-service:
     image: ghcr.io/tum-dev/gocast-voice-service:0.2.0
     volumes:
-      - /home/joscha/.docker:/root/.docker
       - /tmp/whisper:/tmp/whisper
       - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
