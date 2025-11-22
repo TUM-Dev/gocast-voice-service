@@ -25,6 +25,8 @@ var (
 	hwAccel     = flag.Bool("hw-accel", true, "Enable hardware acceleration")
 	queueSize   = flag.Int("queue-size", 10, "Size of the job queue")
 	target      = flag.String("target", "localhost:50053", "gocast server to push subtitles to")
+	authToken   = flag.String("auth-token", "", "if configured, the token is required as grpc metadata field 'auth' for incoming requests "+
+		"and attached to gRPC metadata for outgoing requests.")
 )
 
 func run() error {
@@ -33,5 +35,5 @@ func run() error {
 	ctx := context.Background()
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer cancel()
-	return voiceservice.New(*parallelism, *queueSize, *hwAccel, *target).Run(ctx)
+	return voiceservice.New(*parallelism, *queueSize, *hwAccel, *target, *authToken).Run(ctx)
 }
