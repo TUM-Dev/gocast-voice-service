@@ -2,6 +2,7 @@ package voiceservice
 
 import (
 	"context"
+	"crypto/subtle"
 	"fmt"
 	"io"
 	"log"
@@ -20,6 +21,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -33,14 +35,16 @@ type App struct {
 
 	subtitleReceiverClient pb.SubtitleReceiverClient
 	parallelism            int
+	authToken              string
 }
 
-func New(parallelism, queueSize int, hwacell bool, target string) *App {
+func New(parallelism, queueSize int, hwacell bool, target string, authToken string) *App {
 	return &App{
 		hw:          hwacell,
 		jobs:        make(chan *pb.GenerateRequest, queueSize), // buffer up to this many requests
 		target:      target,
 		parallelism: parallelism,
+		authToken:   authToken,
 	}
 }
 
@@ -50,7 +54,7 @@ func (a *App) Run(ctx context.Context) error {
 		return fmt.Errorf("failed to listen: %w", err)
 	}
 
-	s := grpc.NewServer()
+	s := grpc.NewServer(grpc.UnaryInterceptor(a.authInterceptor))
 	pb.RegisterSubtitleGeneratorServer(s, a)
 
 	defer close(a.jobs)
@@ -191,7 +195,11 @@ func (a *App) handle(ctx context.Context, req *pb.GenerateRequest) error {
 	if err != nil {
 		return err
 	}
-	_, err = a.subtitleReceiverClient.Receive(ctx, &pb.ReceiveRequest{
+	outCtx := ctx
+	if a.authToken != "" {
+		outCtx = metadata.AppendToOutgoingContext(ctx, "auth", a.authToken)
+	}
+	_, err = a.subtitleReceiverClient.Receive(outCtx, &pb.ReceiveRequest{
 		StreamId:  req.StreamId,
 		Subtitles: string(subtitles),
 		Language:  req.Language,
@@ -209,4 +217,26 @@ func (a *App) dial() error {
 	}
 	a.subtitleReceiverClient = pb.NewSubtitleReceiverClient(conn)
 	return nil
+}
+
+func (a *App) authInterceptor(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	if a.authToken == "" {
+		return handler(ctx, req)
+	}
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, status.Errorf(codes.Unauthenticated, "metadata is not provided")
+	}
+
+	values := md.Get("auth")
+	if len(values) == 0 {
+		return nil, status.Errorf(codes.Unauthenticated, "auth token is not provided")
+	}
+
+	if subtle.ConstantTimeCompare([]byte(values[0]), []byte(a.authToken)) == 1 {
+		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token")
+	}
+
+	return handler(ctx, req)
 }

@@ -7,6 +7,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 
@@ -19,6 +20,7 @@ func main() {
 	admintoken := flag.String("admintoken", "", "admintoken to replace jwt for stream auth")
 	dsn := flag.String("dsn", "", "dsn to connect to")
 	srv := flag.String("srv", "localhost:50053", "subtitle server")
+	authToken := flag.String("auth-token", "", "auth token")
 
 	flag.Parse()
 	if *courseid == -1 || (*lang != "en" && *lang != "de") || *admintoken == "" || *dsn == "" {
@@ -55,7 +57,11 @@ WHERE s.deleted_at IS NULL
 
 	for _, r := range res {
 		fmt.Println(r.PlaylistURL)
-		_, err = c.Generate(context.Background(), &pb.GenerateRequest{
+		outCtx := context.Background()
+		if *authToken != "" {
+			outCtx = metadata.AppendToOutgoingContext(outCtx, "auth", *authToken)
+		}
+		_, err = c.Generate(outCtx, &pb.GenerateRequest{
 			StreamId: int32(r.ID),
 			Source:   r.PlaylistURL + "?jwt=" + *admintoken,
 			Language: *lang,
