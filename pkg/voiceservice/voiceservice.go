@@ -234,7 +234,7 @@ func (a *App) authInterceptor(ctx context.Context, req interface{}, _ *grpc.Unar
 		return nil, status.Errorf(codes.Unauthenticated, "auth token is not provided")
 	}
 
-	if subtle.ConstantTimeCompare([]byte(values[0]), []byte(a.authToken)) == 1 {
+	if subtle.ConstantTimeCompare([]byte(values[0]), []byte(a.authToken)) != 1 {
 		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token")
 	}
 
